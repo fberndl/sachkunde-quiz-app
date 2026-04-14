@@ -544,7 +544,7 @@ export default function HangmanGame({ onBack, onXpEarned, semester }) {
     return () => { cancelled = true; };
   }, [semester]);
 
-  const currentWord = gameWords[roundIndex];
+  const currentWord = gameWords[roundIndex] || { word: '', hint: '' };
   const wordUpper = currentWord.word.toUpperCase();
   const wordLettersSet = useMemo(() => new Set(getWordLetters(wordUpper)), [wordUpper]);
 

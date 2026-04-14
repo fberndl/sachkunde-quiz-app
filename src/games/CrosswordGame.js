@@ -287,6 +287,18 @@ export default function CrosswordGame({ onBack, onXpEarned, semester }) {
   }, [semester]);
 
   const puzzle = puzzles[puzzleIdx];
+  if (!puzzle) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: COLORS.dark, textAlign: 'center' }}>Keine Wörter verfügbar</Text>
+          <TouchableOpacity onPress={onBack} style={{ marginTop: 16, padding: 14, backgroundColor: COLORS.blue, borderRadius: 12 }}>
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Zurück</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
   const { rows, cols, grid, clues, words } = puzzle;
 
   // User input: 2D array of strings ('' = empty)

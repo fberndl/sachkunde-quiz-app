@@ -626,7 +626,12 @@ function AppInner() {
 
   const getTopicQuestions = (t) => allQuestions.filter(q => t === 'Alle' || q.topic === t);
 
-  const start = () => { setQs(shuffleArray(getTopicQuestions(topic)).slice(0, 14)); setScreen('quiz'); };
+  const start = () => {
+    const available = shuffleArray(getTopicQuestions(topic)).slice(0, 14);
+    if (available.length === 0) return;
+    setQs(available);
+    setScreen('quiz');
+  };
   const finish = (score, correct, wrong) => {
     if (score > hs) setHs(score);
     addXp(score);
@@ -635,12 +640,10 @@ function AppInner() {
   };
 
   const handleSelectGame = (gameId) => {
-    if (gameId === 'millionaire') {
-      setQs(shuffleArray(allQuestions));
-    } else {
-      const topicQs = shuffleArray(getTopicQuestions(topic));
-      setQs(topicQs.slice(0, 14));
-    }
+    const pool = gameId === 'millionaire' ? allQuestions : getTopicQuestions(topic);
+    const available = shuffleArray(pool).slice(0, 14);
+    if (available.length === 0) return;
+    setQs(available);
     setScreen('game_' + gameId);
   };
 

@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🎓 Andreas Lern-App</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;color:#fff}
+    #app{max-width:500px;margin:0 auto;padding:1rem;min-height:100vh}
+    .btn{width:100%;padding:1rem;border:none;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:.5rem;text-align:left;display:flex;align-items:center;gap:.75rem}
+    .btn-topic{background:rgba(255,255,255,.15);color:#fff}
+    .btn-topic:hover{background:rgba(255,255,255,.25)}
+    .btn-primary{background:#10b981;color:#fff;justify-content:center}
+    .btn-secondary{background:rgba(255,255,255,.2);color:#fff;justify-content:center}
+    .btn-answer{background:rgba(255,255,255,.1);color:#fff;justify-content:center;padding:1rem}
+    .btn-answer.correct{background:#10b981}
+    .btn-answer.wrong{background:#ef4444}
+    .back-btn{background:transparent;border:none;color:rgba(255,255,255,.8);font-size:1.2rem;cursor:pointer;padding:.5rem}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+    .tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+    .tab{flex:1;padding:.75rem;border:none;border-radius:10px;background:rgba(0,0,0,.2);color:rgba(255,255,255,.6);font-weight:600;cursor:pointer;font-size:.9rem;min-width:70px}
+    .tab.active{background:rgba(255,255,255,.25);color:#fff}
+    .box{background:rgba(255,255,255,.15);border-radius:16px;padding:1.25rem;margin-bottom:1rem;text-align:center}
+    .cat{font-size:.85rem;opacity:.7;margin:1.5rem 0 .5rem;text-transform:uppercase;letter-spacing:1px}
+    
+    /* Game category sections */
+    .game-section{margin:1.2rem 0;padding:1rem;background:rgba(0,0,0,.15);border-radius:16px}
+    .game-section-title{font-size:1rem;font-weight:700;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;padding-bottom:.5rem;border-bottom:2px solid rgba(255,255,255,.2)}
+    .game-section .btn{margin-bottom:.4rem}
+    
+    /* Memory grid */
+    .memory-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin:1rem 0}
+    .card{aspect-ratio:1;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.7rem;text-align:center;cursor:pointer;padding:3px;transition:all .3s}
+    .card.flip{background:#3b82f6;color:#fff}
+    .card.match{background:#10b981;color:#fff}
+    .card.match-p1{background:#3b82f6;color:#fff}
+    .card.match-p2{background:#ef4444;color:#fff}
+    
+    /* Sorting */
+    .sort-item{background:rgba(255,255,255,.15);padding:.75rem;border-radius:10px;margin:.4rem 0;cursor:grab;display:flex;align-items:center;gap:.5rem}
+    .sort-item:active{cursor:grabbing;background:rgba(255,255,255,.25)}
+    .sort-num{background:rgba(0,0,0,.3);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:.85rem}
+    
+    /* Simulator controls */
+    .sim-display{font-size:3rem;text-align:center;padding:1.5rem;background:rgba(0,0,0,.2);border-radius:16px;margin:1rem 0}
+    .sim-info{text-align:center;font-size:1.1rem;padding:.75rem;background:rgba(255,255,255,.1);border-radius:10px;margin:.5rem 0}
+    input[type=range]{width:100%;margin:1rem 0;accent-color:#10b981}
+    
+    /* Quiz Run */
+    .run-area{display:flex;gap:1rem;margin:1rem 0}
+    .run-door{flex:1;padding:2rem 1rem;background:rgba(255,255,255,.1);border-radius:16px;text-align:center;cursor:pointer;border:3px solid transparent;transition:all .2s}
+    .run-door:hover{background:rgba(255,255,255,.2)}
+    .run-door.correct{background:#10b981;border-color:#fff}
+    .run-door.wrong{background:#ef4444;border-color:#fff}
+    .run-emoji{font-size:3rem;margin-bottom:.5rem}
+    .lives{font-size:1.5rem;letter-spacing:3px}
+    .timer{font-size:2rem;font-weight:bold}
+    
+    /* Lückentext */
+    .luecke-input{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);border-radius:8px;padding:.5rem;color:#fff;font-size:1rem;width:80px;text-align:center;margin:0 .25rem}
+    .luecke-input:focus{outline:none;border-color:#10b981}
+    .luecke-input.correct{border-color:#10b981;background:rgba(16,185,129,.3)}
+    .luecke-input.wrong{border-color:#ef4444;background:rgba(239,68,68,.3)}
+    
+    /* Stars display */
+    .stars{color:#fbbf24;font-size:1.2rem;margin-left:.5rem}
+    .topic-stars{font-size:.9rem;opacity:.8}
+    
+    /* Progress */
+    .progress{height:6px;background:rgba(0,0,0,.2);border-radius:3px;margin:.5rem 0;overflow:hidden}
+    .progress-bar{height:100%;background:#10b981;transition:width .3s}
+    
+    /* Subcategory styling */
+    .subcat{font-size:.75rem;opacity:.6;margin:1rem 0 .3rem;padding-left:.5rem;border-left:3px solid rgba(255,255,255,.3)}
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// State
+let tab = 'quiz';
+let topic = null;
+let qs = [];
+let qi = 0;
+let score = 0;
+let stars = JSON.parse(localStorage.getItem('andreas_stars') || '{}');
+
+// All Quiz Questions
+const Q = {
+  wasser: [
+    {q:'Was passiert beim Schmelzen?',a:'Eis wird zu Wasser',o:['Eis wird zu Wasser','Wasser wird zu Eis','Wasser wird zu Dampf']},
+    {q:'Was passiert beim Gefrieren?',a:'Wasser wird zu Eis',o:['Wasser wird zu Eis','Eis wird zu Wasser','Dampf wird zu Wasser']},
+    {q:'Was passiert beim Verdampfen?',a:'Wasser wird zu Dampf',o:['Wasser wird zu Dampf','Dampf wird zu Wasser','Eis wird zu Wasser']},
+    {q:'Was passiert beim Kondensieren?',a:'Dampf wird zu Wasser',o:['Dampf wird zu Wasser','Wasser wird zu Dampf','Wasser wird zu Eis']},
+    {q:'Bei welcher Temperatur gefriert Wasser?',a:'0°C',o:['0°C','100°C','50°C']},
+    {q:'Bei welcher Temperatur siedet Wasser?',a:'100°C',o:['100°C','0°C','50°C']},
+    {q:'Welcher Zustand ist Eis?',a:'fest',o:['fest','flüssig','gasförmig']},
+    {q:'Welcher Zustand ist Wasserdampf?',a:'gasförmig',o:['gasförmig','fest','flüssig']},
+    {q:'Wie nennt man es, wenn Eis direkt zu Dampf wird?',a:'Sublimieren',o:['Sublimieren','Schmelzen','Verdampfen']},
+    {q:'Was ist der Wasserkreislauf?',a:'Kreislauf des Wassers in der Natur',o:['Kreislauf des Wassers in der Natur','Ein Schwimmbad','Ein Wasserhahn']}
+  ],
+  strom: [
+    {q:'Was leitet Strom?',a:'Metall',o:['Metall','Plastik','Holz']},
+    {q:'Was leitet KEINEN Strom?',a:'Gummi',o:['Gummi','Kupfer','Eisen']},
+    {q:'Woraus besteht ein Stromkreis mindestens?',a:'Stromquelle, Leitung, Verbraucher',o:['Stromquelle, Leitung, Verbraucher','Nur Batterie','Nur Lampe']},
+    {q:'Was passiert bei offenem Stromkreis?',a:'Strom fließt nicht',o:['Strom fließt nicht','Lampe leuchtet','Strom fließt']},
+    {q:'Leitet Wasser Strom?',a:'Ja, wenn Salz drin ist',o:['Ja, wenn Salz drin ist','Nie','Immer']},
+    {q:'Was ist ein Kurzschluss?',a:'Strom nimmt den kürzesten Weg',o:['Strom nimmt den kürzesten Weg','Eine kurze Leitung','Ein kleiner Schalter']},
+    {q:'Was ist ein Isolator?',a:'Material das nicht leitet',o:['Material das nicht leitet','Material das leitet','Eine Batterie']},
+    {q:'Leitet Kupfer Strom?',a:'Ja',o:['Ja','Nein','Manchmal']},
+    {q:'Was hat eine Batterie?',a:'Plus und Minus',o:['Plus und Minus','Nur Plus','Nur Minus']},
+    {q:'Was passiert wenn die Lampe leuchtet?',a:'Stromkreis ist geschlossen',o:['Stromkreis ist geschlossen','Stromkreis ist offen','Batterie ist leer']},
+    {q:'Wer hat die Glühbirne erfunden?',a:'Thomas Alva Edison',o:['Thomas Alva Edison','Albert Einstein','Nikola Tesla']},
+    {q:'Wann wurde die Glühbirne erfunden?',a:'1879',o:['1879','1950','1799']},
+    {q:'Wie heißt der Draht der in der Glühbirne leuchtet?',a:'Glühdraht',o:['Glühdraht','Stromkabel','Lichtdraht']},
+    {q:'Warum leuchtet der Glühdraht?',a:'Weil er sehr heiß wird',o:['Weil er sehr heiß wird','Weil er kalt ist','Weil er nass ist']},
+    {q:'Wie heißt das Glas um die Glühbirne?',a:'Glaskolben',o:['Glaskolben','Glaskugel','Glasrohr']},
+    {q:'Warum verwendet man heute LED-Lampen?',a:'Sie verbrauchen weniger Energie',o:['Sie verbrauchen weniger Energie','Sie sind lauter','Sie sind größer']},
+    {q:'Warum leuchtet die Glühbirne bei offenem Stromkreis nicht?',a:'Der Stromkreis ist nicht geschlossen',o:['Der Stromkreis ist nicht geschlossen','Die Batterie ist leer','Die Glühbirne ist kaputt']},
+    {q:'Womit muss das Kabel verbunden sein?',a:'Mit Glühbirne und Batterie',o:['Mit Glühbirne und Batterie','Nur mit der Lampe','Nur mit dem Schalter']},
+    {q:'Wo ist der Strom gespeichert?',a:'In der Batterie',o:['In der Batterie','Im Kabel','In der Glühbirne']},
+    {q:'Was passiert wenn man den Stromkreis schließt?',a:'Strom fließt zur Glühbirne',o:['Strom fließt zur Glühbirne','Die Batterie wird leer','Das Kabel wird heiß']},
+    {q:'Seit wann kann man in Europa zum Großteil nur noch LED-Lampen kaufen?',a:'Seit 2012',o:['Seit 2012','Seit 1990','Seit 2020']},
+    {q:'Was ist der Sockel bei der Glühbirne?',a:'Der untere Teil zum Einschrauben',o:['Der untere Teil zum Einschrauben','Das Glas oben','Der Draht innen']},
+    {q:'Wo fließt der Strom zuerst in die Glühbirne?',a:'Über das Kontaktplättchen',o:['Über das Kontaktplättchen','Über den Glaskolben','Über den Glühdraht']}
+  ],
+  ei: [
+    {q:'Wie lange brütet ein Huhn?',a:'21 Tage',o:['21 Tage','7 Tage','30 Tage']},
+    {q:'Was braucht ein Ei zum Ausbrüten?',a:'Wärme',o:['Wärme','Kälte','Licht']},
+    {q:'Wie nennt man das Aufbrechen der Schale?',a:'Schlüpfen',o:['Schlüpfen','Knacken','Brechen']},
+    {q:'Was ist im Ei außer dem Küken?',a:'Dotter und Eiweiß',o:['Dotter und Eiweiß','Nur Wasser','Nur Luft']},
+    {q:'Wer wärmt die Eier?',a:'Die Henne',o:['Die Henne','Der Hahn','Die Küken']},
+    {q:'Wie warm muss es im Nest sein?',a:'ca. 38°C',o:['ca. 38°C','ca. 20°C','ca. 50°C']},
+    {q:'Welche Farbe hat der Dotter?',a:'Gelb',o:['Gelb','Weiß','Rot']},
+    {q:'Was schützt das Küken im Ei?',a:'Die Schale',o:['Die Schale','Der Dotter','Die Luft']},
+    {q:'Womit pickt das Küken die Schale auf?',a:'Mit dem Eizahn',o:['Mit dem Eizahn','Mit den Füßen','Mit den Flügeln']},
+    {q:'Wie sieht ein frisch geschlüpftes Küken aus?',a:'Nass und erschöpft',o:['Nass und erschöpft','Trocken und flauschig','Bunt und groß']}
+  ],
+  huhn: [
+    {q:'Was frisst ein Huhn?',a:'Körner, Würmer, Gras',o:['Körner, Würmer, Gras','Nur Fleisch','Nur Milch']},
+    {q:'Wie nennt man ein männliches Huhn?',a:'Hahn',o:['Hahn','Henne','Küken']},
+    {q:'Wie nennt man ein weibliches Huhn?',a:'Henne',o:['Henne','Hahn','Glucke']},
+    {q:'Was macht der Hahn früh morgens?',a:'Krähen',o:['Krähen','Schlafen','Eier legen']},
+    {q:'Können Hühner fliegen?',a:'Nur kurze Strecken',o:['Nur kurze Strecken','Sehr weit','Gar nicht']},
+    {q:'Wie viele Eier legt eine Henne pro Jahr?',a:'ca. 250-300',o:['ca. 250-300','ca. 10','ca. 1000']},
+    {q:'Was hat der Hahn auf dem Kopf?',a:'Einen Kamm',o:['Einen Kamm','Einen Hut','Federn']},
+    {q:'Wie nennt man ein junges Huhn?',a:'Küken',o:['Küken','Welpe','Kalb']},
+    {q:'Wo schlafen Hühner gerne?',a:'Auf Stangen',o:['Auf Stangen','Im Wasser','Unter der Erde']},
+    {q:'Was machen Hühner mit Sand?',a:'Baden darin',o:['Baden darin','Essen ihn','Bauen Nester']}
+  ],
+  
+  // === FLORIDSDORFER BEZIRKSTEILE ===
+  floridsdorf_ort: [
+    {q:'Wann wurde der Ortsteil Floridsdorf gegründet?',a:'1786',o:['1786','1904','1829']},
+    {q:'Wie hieß der Gründer von Floridsdorf?',a:'Floridus Leeb',o:['Floridus Leeb','Leopold III','Karl Seitz']},
+    {q:'Seit wann hatte Floridsdorf eine eigene Schule?',a:'1793',o:['1793','1801','1904']},
+    {q:'Seit wann hatte Floridsdorf eine eigene Kirche?',a:'1801',o:['1801','1793','1786']},
+    {q:'Wann wurde Floridsdorf nach Wien eingemeindet?',a:'28. Dezember 1904',o:['28. Dezember 1904','1. Januar 1900','15. März 1894']},
+    {q:'Der wievieltgrößte Bezirk Wiens ist Floridsdorf?',a:'Zweitgrößte',o:['Zweitgrößte','Größte','Drittgrößte']},
+    {q:'Wann wurde das Amtshaus (Rathaus) gebaut?',a:'1901-1903',o:['1901-1903','1786','1950']},
+    {q:'Wo befindet sich das Amtshaus?',a:'Am Spitz 1',o:['Am Spitz 1','Prager Straße 33','Jedleseer Straße']},
+    {q:'Was erlitt Floridsdorf im 2. Weltkrieg?',a:'Schwere Bombenschäden',o:['Schwere Bombenschäden','Keine Schäden','Überschwemmungen']},
+    {q:'Welche Ämter befinden sich im Amtshaus?',a:'Standesamt, Gesundheitsamt, Jugendamt',o:['Standesamt, Gesundheitsamt, Jugendamt','Nur Polizei','Nur Schule']},
+    {q:'Wie viele Bahnsteige hat der Bahnhof Floridsdorf?',a:'5',o:['5','3','10']},
+    {q:'Welche U-Bahn-Linie fährt zum Bahnhof Floridsdorf?',a:'U6',o:['U6','U1','U4']}
+  ],
+  
+  floridsdorf: [
+    {q:'Welche Bezirksnummer hat Floridsdorf?',a:'21',o:['21','22','20']},
+    {q:'Wann wurde Floridsdorf Teil von Wien?',a:'1904',o:['1904','1850','1950']},
+    {q:'Welcher Fluss fließt durch Floridsdorf?',a:'Donau',o:['Donau','Rhein','Elbe']},
+    {q:'Wie heißt eine bekannte Straße in Floridsdorf?',a:'Brünner Straße',o:['Brünner Straße','Kärntner Straße','Mariahilfer Straße']},
+    {q:'Was ist die Alte Donau?',a:'Ein Altarm der Donau',o:['Ein Altarm der Donau','Ein Schwimmbad','Ein Berg']},
+    {q:'Welcher Ortsteil gehört zu Floridsdorf?',a:'Stammersdorf',o:['Stammersdorf','Favoriten','Döbling']},
+    {q:'Wofür ist Stammersdorf bekannt?',a:'Weinbau',o:['Weinbau','Fischerei','Bergbau']},
+    {q:'Welche U-Bahn fährt nach Floridsdorf?',a:'U6',o:['U6','U1','U3']},
+    {q:'Was ist das Floridsdorfer Wappen?',a:'Vase mit 3 Blumen',o:['Vase mit 3 Blumen','Ein Löwe','Ein Adler']},
+    {q:'An welchem Ufer der Donau liegt Floridsdorf?',a:'Linkes Ufer',o:['Linkes Ufer','Rechtes Ufer','Auf einer Insel']}
+  ],
+  
+  donaufeld: [
+    {q:'Wann wurde das erste Haus beim Mühlschüttelarm gebaut?',a:'1829',o:['1829','1904','1950']},
+    {q:'Zu welcher Siedlung gehörte Donaufeld lange Zeit?',a:'Zur Leopoldau',o:['Zur Leopoldau','Zu Stammersdorf','Zu Jedlesee']},
+    {q:'Wie hieß Donaufeld früher?',a:'Neu Leopoldau',o:['Neu Leopoldau','Alt Floridsdorf','Klein Wien']},
+    {q:'Wann wurde die Donaufelder Pfarrkirche errichtet?',a:'1905',o:['1905','1829','1950']},
+    {q:'Wie hoch ist der Pfarrkirchturm in Donaufeld?',a:'96 Meter',o:['96 Meter','50 Meter','120 Meter']},
+    {q:'Welche Sehenswürdigkeiten stehen in Donaufeld?',a:'Pfarrkirche & Islamisches Zentrum',o:['Pfarrkirche & Islamisches Zentrum','Stephansdom','Riesenrad']},
+    {q:'Welche Kirche ist in Donaufeld?',a:'Donaufelder Pfarrkirche',o:['Donaufelder Pfarrkirche','Stephansdom','Karlskirche']},
+    {q:'Welche Farben hat das Wappen von Donaufeld?',a:'Grün, Rot, Schwarz',o:['Grün, Rot, Schwarz','Blau, Weiß','Gelb, Rot']},
+    {q:'In welchem Bezirk liegt Donaufeld?',a:'21. Bezirk (Floridsdorf)',o:['21. Bezirk (Floridsdorf)','22. Bezirk','10. Bezirk']},
+    {q:'Was ist der Mühlschüttelarm?',a:'Ein Donauarm',o:['Ein Donauarm','Ein Berg','Eine Straße']}
+  ],
+  
+  grossjedlersdorf: [
+    {q:'Wie lautete der ursprüngliche Name von Groß Jedlersdorf?',a:'Urlingestorf',o:['Urlingestorf','Jedlesdorf','Großdorf']},
+    {q:'Wann wurde Urlingestorf erstmals erwähnt?',a:'1108',o:['1108','1529','1904']},
+    {q:'Was bedeutet "Urling" im Mittelhochdeutschen?',a:'Kampf oder Krieg',o:['Kampf oder Krieg','Frieden','Wasser']},
+    {q:'Von wem wurde Groß Jedlersdorf 1529 zerstört?',a:'Von den Türken',o:['Von den Türken','Von den Schweden','Von den Ungarn']},
+    {q:'Seit wann hat Groß Jedlersdorf eine Pfarrkirche?',a:'1538',o:['1538','1108','1904']},
+    {q:'Was war die Pest?',a:'Eine gefährliche Krankheit',o:['Eine gefährliche Krankheit','Ein Fluss','Ein Fest']},
+    {q:'Wann wurde Groß Jedlersdorf eingemeindet?',a:'1904',o:['1904','1529','1108']},
+    {q:'Mit wem gab es oft Streit wegen Grenzen?',a:'Mit den Leopoldauern',o:['Mit den Leopoldauern','Mit den Wienern','Mit den Stammersdorfern']},
+    {q:'Warum gab es Grenzstreit?',a:'Wegen Überschwemmungen',o:['Wegen Überschwemmungen','Wegen Gold','Wegen Tieren']},
+    {q:'Wie hoch ist das Trillerkreuz?',a:'3,2 Meter',o:['3,2 Meter','10 Meter','1 Meter']},
+    {q:'Wo steht das Trillerkreuz?',a:'Brünner Straße 97-99',o:['Brünner Straße 97-99','Prager Straße','Siemensstraße']},
+    {q:'Wie lang ist der Marchfeldkanal?',a:'Etwa 19 km',o:['Etwa 19 km','5 km','100 km']},
+    {q:'Wann wurde mit dem Bau des Marchfeldkanals begonnen?',a:'1986',o:['1986','1904','1829']},
+    {q:'Was war der Sockel des Trillerkreuzes früher?',a:'Mahlstein einer Schiffsmühle',o:['Mahlstein einer Schiffsmühle','Ein Brunnen','Ein Altar']}
+  ],
+  
+  jedlesee: [
+    {q:'Jedlesee ist der ... Bezirksteil Floridsdorfs.',a:'älteste',o:['älteste','jüngste','größte']},
+    {q:'Wann wurde Jedlesee erstmals urkundlich erwähnt?',a:'1014',o:['1014','1108','1904']},
+    {q:'Was bedeutet der Name Jedlesee?',a:'See des Ulrich',o:['See des Ulrich','Großer See','Kleiner See']},
+    {q:'Was ist die "Schwarze Lacke"?',a:'Ein reißender Donauarm',o:['Ein reißender Donauarm','Ein See','Ein Berg']},
+    {q:'Warum blieben die Leute trotz Hochwasser?',a:'Die Donau brachte viel Geld',o:['Die Donau brachte viel Geld','Es gab Goldschätze','Der Boden war fruchtbar']},
+    {q:'Wie verdienten die Leute früher Geld?',a:'Mit Fähren über die Donau',o:['Mit Fähren über die Donau','Mit Bergbau','Mit Fabriken']},
+    {q:'Warum brauchte man Fähren?',a:'Es gab keine Brücken',o:['Es gab keine Brücken','Es war günstiger','Es war schneller']},
+    {q:'Wann wurde die Blut Christi Kirche eingeweiht?',a:'1964',o:['1964','1014','1904']},
+    {q:'Wie hoch ist der Turm der Blut Christi Kirche?',a:'40 Meter',o:['40 Meter','96 Meter','20 Meter']},
+    {q:'Welche Form hat der Turm der Blut Christi Kirche?',a:'Pyramidenförmig',o:['Pyramidenförmig','Rund','Eckig']},
+    {q:'Wann wurde das Bezirksmuseum als Wohnhaus gebaut?',a:'1901',o:['1901','1960','1800']},
+    {q:'Seit wann ist es ein Museum?',a:'1960',o:['1960','1901','2000']},
+    {q:'Wie wird der Karl-Seitz-Hof auch genannt?',a:'Gartenstadt',o:['Gartenstadt','Schloss','Burg']},
+    {q:'Wann wurde der Karl-Seitz-Hof gebaut?',a:'1920-1930',o:['1920-1930','1960','1800']},
+    {q:'Nach wem ist der Karl-Seitz-Hof benannt?',a:'Wiener Bürgermeister Karl Seitz',o:['Wiener Bürgermeister Karl Seitz','Kaiser Karl','Architekt Karl']},
+    {q:'Was zeigt das Wappen von Jedlesee?',a:'M und L für Maria Loretto',o:['M und L für Maria Loretto','Einen Turm','Zwei Säcke']}
+  ],
+  
+  leopoldau: [
+    {q:'Was ist das älteste Siedlungsgebiet auf Floridsdorfer Boden?',a:'Leopoldau',o:['Leopoldau','Jedlesee','Stammersdorf']},
+    {q:'Wann lebten hier schon Menschen?',a:'In der Jungsteinzeit',o:['In der Jungsteinzeit','Im Mittelalter','1900']},
+    {q:'Wovon lebten die Menschen früher in Leopoldau?',a:'Vom Fischfang',o:['Vom Fischfang','Vom Bergbau','Von Fabriken']},
+    {q:'Wie hieß Leopoldau zu Beginn?',a:'Alpiltowe',o:['Alpiltowe','Leopoldstadt','Großleopoldau']},
+    {q:'Wer war der Herr des Ortes bei der Gründung?',a:'Leopold III',o:['Leopold III','Franz Josef','Karl der Große']},
+    {q:'Was verwechselte das Volk mit Leopold?',a:'Eupolt',o:['Eupolt','Leobold','Leopard']},
+    {q:'Welche Krankheiten gab es im Mittelalter?',a:'Pest und Cholera',o:['Pest und Cholera','Grippe','Keine']},
+    {q:'Wo steht das Kugelkreuz?',a:'An der Siemensstraße',o:['An der Siemensstraße','Am Spitz','In der Prager Straße']},
+    {q:'Für wie viele Pestopfer ist das Kugelkreuz Grabstätte?',a:'Etwa 700',o:['Etwa 700','100','1000']},
+    {q:'Seit wann hat Leopoldau eine eigene Schule?',a:'Um 1600',o:['Um 1600','1904','1800']},
+    {q:'Wann wurde Leopoldau zur Marktgemeinde?',a:'1831',o:['1831','1904','1600']},
+    {q:'Wann wurde Leopoldau nach Wien eingemeindet?',a:'1904',o:['1904','1831','1600']},
+    {q:'Wie reagierte die Bevölkerung auf die Eingemeindung?',a:'Sie wehrte sich heftig',o:['Sie wehrte sich heftig','Sie freute sich','Sie war gleichgültig']},
+    {q:'Wann wurde die Leopoldauer Pfarrkirche zerstört?',a:'1683 (Türkenbelagerung)',o:['1683 (Türkenbelagerung)','1904','1952']},
+    {q:'Wann wurde die neue Kirche gebaut?',a:'1696',o:['1696','1683','1952']},
+    {q:'In welchem Stil ist die Leopoldauer Kirche?',a:'Barock',o:['Barock','Gotik','Modern']},
+    {q:'Aus welchem Jahr stammt die Pestsäule?',a:'1679',o:['1679','1904','1800']},
+    {q:'Wie viele Menschen ruhen unter der Pestsäule?',a:'133',o:['133','700','50']}
+  ],
+  
+  stammersdorf: [
+    {q:'Wann wurde Stammersdorf erstmals urkundlich erwähnt?',a:'1108',o:['1108','1078','1904']},
+    {q:'Wer lebte hier schon in der Eiszeit?',a:'Mammutjäger',o:['Mammutjäger','Ritter','Fischer']},
+    {q:'Was wurde in Stammersdorf gefunden?',a:'Mammutknochen',o:['Mammutknochen','Gold','Diamanten']},
+    {q:'Wie hieß Stammersdorf früher?',a:'Stenmarsdorf',o:['Stenmarsdorf','Stammburg','Steinfeld']},
+    {q:'Seit wann heißt es Stammersdorf?',a:'1866',o:['1866','1108','1904']},
+    {q:'Was ist ein Angerdorf?',a:'Eine linsenförmige Dorfanlage',o:['Eine linsenförmige Dorfanlage','Ein Bergdorf','Ein Fischerdorf']},
+    {q:'Wozu brauchten die Stammersdorfer den Wehrturm?',a:'Um sich zu schützen',o:['Um sich zu schützen','Um Aussicht zu haben','Zum Wohnen']},
+    {q:'Was war der Bisamberg?',a:'Ein guter Aussichtspunkt',o:['Ein guter Aussichtspunkt','Ein See','Ein Schloss']},
+    {q:'Von wem wurde Stammersdorf zerstört?',a:'Ungarn, Schweden, Türken',o:['Ungarn, Schweden, Türken','Nur Türken','Niemand']},
+    {q:'Wann raffte die Pest viele Einwohner dahin?',a:'1679 und 1713',o:['1679 und 1713','1904','1108']},
+    {q:'Was war Stammersdorf im 2. Weltkrieg?',a:'Ein Befestigungszentrum',o:['Ein Befestigungszentrum','Ein Krankenhaus','Evakuiert']},
+    {q:'Wofür ist Stammersdorf heute bekannt?',a:'Als Wiener Heurigenort',o:['Als Wiener Heurigenort','Für Industrie','Für Schlösser']},
+    {q:'Was ist seit Jahrhunderten wichtig für Stammersdorf?',a:'Der Weinanbau',o:['Der Weinanbau','Der Bergbau','Die Fischerei']},
+    {q:'Seit wann ist die Pfarrkirche bekannt?',a:'1478',o:['1478','1108','1904']},
+    {q:'Was ist besonders an der Stammersdorfer Kirche?',a:'Sie hat einen Wehrturm',o:['Sie hat einen Wehrturm','Sie ist aus Holz','Sie ist unterirdisch']},
+    {q:'Woran erinnert die Kaisergedenksäule?',a:'Ausrufung der 1. Republik 1918',o:['Ausrufung der 1. Republik 1918','Kaiser Franz Josef','1. Weltkrieg']},
+    {q:'Wo steht die Kaisergedenksäule?',a:'Am Freiheitsplatz',o:['Am Freiheitsplatz','Am Spitz','Im Prater']}
+  ],
+  
+  strebersdorf: [
+    {q:'Wann wurde Strebersdorf erstmals erwähnt?',a:'1078',o:['1078','1108','1904']},
+    {q:'Strebersdorf ist somit der ... dokumentierte Bezirksteil.',a:'älteste',o:['älteste','jüngste','größte']},
+    {q:'Was war Strebersdorf früher?',a:'Eine Fischersiedlung',o:['Eine Fischersiedlung','Eine Burg','Ein Markt']},
+    {q:'Was zerstörte 1440 den ganzen Ort?',a:'Ein Hochwasser',o:['Ein Hochwasser','Ein Feuer','Ein Krieg']},
+    {q:'Wohin siedelten die Überlebenden?',a:'An den Fuß des Bisamberges',o:['An den Fuß des Bisamberges','Nach Wien','Nach Ungarn']},
+    {q:'Wie hieß Strebersdorf früher?',a:'Strobersdorf',o:['Strobersdorf','Streberdorf','Steinerdorf']},
+    {q:'Was bedeutet "Stroba"?',a:'Der erste Bewohner',o:['Der erste Bewohner','Ein Fluss','Ein Berg']},
+    {q:'Was waren "Strobler"?',a:'Strohhändler und Strohmattenerzeuger',o:['Strohhändler und Strohmattenerzeuger','Fischer','Bauern']},
+    {q:'Was verschonte auch Strebersdorf nicht?',a:'Die Pest',o:['Die Pest','Das Hochwasser','Der Krieg']},
+    {q:'Wie viele starben 1679 an der Pest?',a:'Mehr als ein Drittel',o:['Mehr als ein Drittel','Die Hälfte','Alle']},
+    {q:'Seit wann hat Strebersdorf eine Schule?',a:'1845',o:['1845','1078','1904']},
+    {q:'Wer kaufte 1866 das Schloss Strebersdorf?',a:'Der Schulbrüderorden',o:['Der Schulbrüderorden','Der Kaiser','Die Stadt Wien']},
+    {q:'Wie heißt das Schloss heute?',a:'Marienheim',o:['Marienheim','Schönbrunn','Belvedere']},
+    {q:'Wann wurde Strebersdorf vollständig eingemeindet?',a:'15. Februar 1910',o:['15. Februar 1910','1904','1078']},
+    {q:'Wer waren die ersten Besitzer des Schlosses?',a:'Die Vohburger Markgrafen',o:['Die Vohburger Markgrafen','Die Habsburger','Die Schulbrüder']},
+    {q:'Wann brannte das Schloss völlig ab?',a:'1822',o:['1822','1440','1904']},
+    {q:'Wie heißt die Klosterkirche?',a:'Maria Immaculata',o:['Maria Immaculata','Stephansdom','Karlskirche']},
+    {q:'Wann wurde die Klosterkirche zur Pfarrkirche?',a:'1941',o:['1941','1908','1078']}
+  ],
+  
+  // Übersicht 21. Bezirk
+  bezirk21: [
+    {q:'Welche U-Bahnlinie fährt durch Floridsdorf?',a:'U6',o:['U6','U1','U4']},
+    {q:'Von wo bis wo fährt die Straßenbahn 26?',a:'Strebersdorf bis Hausfeldstraße',o:['Strebersdorf bis Hausfeldstraße','Floridsdorf bis Praterstern','Kagran bis Stephansplatz']},
+    {q:'Wohin fährt der Bus 29A?',a:'Floridsdorf-Leopoldau-Großfeldsiedlung',o:['Floridsdorf-Leopoldau-Großfeldsiedlung','Zum Prater','Zum Stephansplatz']},
+    {q:'Was ist das Nachbarbundesland im Norden?',a:'Niederösterreich',o:['Niederösterreich','Oberösterreich','Burgenland']},
+    {q:'In welchen Bezirk kommt man über die Brigittenauer Brücke?',a:'20. Bezirk (Brigittenau)',o:['20. Bezirk (Brigittenau)','19. Bezirk','22. Bezirk']},
+    {q:'In welchen Bezirk kommt man über die Nordbrücke?',a:'19. Bezirk (Döbling)',o:['19. Bezirk (Döbling)','20. Bezirk','22. Bezirk']},
+    {q:'In welchen Bezirk kommt man mit dem 31A nach Osten?',a:'22. Bezirk (Donaustadt)',o:['22. Bezirk (Donaustadt)','20. Bezirk','19. Bezirk']},
+    {q:'Wo ist das Amtshaus zu finden?',a:'Am Spitz',o:['Am Spitz','Prager Straße','Jedleseer Straße']},
+    {q:'Wo ist der Karl-Seitz-Hof?',a:'Jedleseer Straße',o:['Jedleseer Straße','Am Spitz','Prager Straße']},
+    {q:'Wo ist das Bezirksmuseum?',a:'Prager Straße',o:['Prager Straße','Am Spitz','Siemensstraße']},
+    {q:'Wo ist das Marienheim?',a:'Anton-Böck-Gasse',o:['Anton-Böck-Gasse','Prager Straße','Siemensstraße']},
+    {q:'Welche Verkehrsmittel fahren vom Bahnhof Floridsdorf?',a:'Regionalbahn, S-Bahn, U-Bahn',o:['Regionalbahn, S-Bahn, U-Bahn','Nur U-Bahn','Nur Bus']}
+  ],
+  
+  wien: [
+    {q:'Wie viele Bezirke hat Wien?',a:'23',o:['23','20','25']},
+    {q:'Welcher Fluss fließt durch Wien?',a:'Donau',o:['Donau','Rhein','Elbe']},
+    {q:'Wie heißt das berühmte Riesenrad?',a:'Wiener Riesenrad',o:['Wiener Riesenrad','Prater Rad','Donau Rad']},
+    {q:'In welchem Bezirk ist der Stephansdom?',a:'1. Bezirk',o:['1. Bezirk','21. Bezirk','10. Bezirk']},
+    {q:'Wie heißt der Tierpark in Wien?',a:'Tiergarten Schönbrunn',o:['Tiergarten Schönbrunn','Wiener Zoo','Prater Zoo']},
+    {q:'Was ist der Prater?',a:'Ein großer Park mit Vergnügungspark',o:['Ein großer Park mit Vergnügungspark','Ein Berg','Ein See']},
+    {q:'Wie heißt das Schloss in Wien?',a:'Schönbrunn',o:['Schönbrunn','Neuschwanstein','Versailles']},
+    {q:'Was ist der Stephansdom?',a:'Eine Kirche',o:['Eine Kirche','Ein Schloss','Ein Museum']},
+    {q:'Wie nennt man die Wiener U-Bahn Linien?',a:'U1 bis U6',o:['U1 bis U6','S1 bis S10','B1 bis B5']},
+    {q:'Was ist das Rathaus?',a:'Sitz der Stadtregierung',o:['Sitz der Stadtregierung','Ein Einkaufszentrum','Ein Krankenhaus']},
+    {q:'Was ist Wien?',a:'Bundeshauptstadt von Österreich',o:['Bundeshauptstadt von Österreich','Eine kleine Stadt','Ein Dorf']},
+    {q:'Wie viele Menschen leben in Wien?',a:'Rund 2 Millionen',o:['Rund 2 Millionen','500.000','10 Millionen']},
+    {q:'Wie groß ist Wien?',a:'Etwa 415 km²',o:['Etwa 415 km²','100 km²','1000 km²']},
+    {q:'Welches Bundesland umgibt Wien?',a:'Niederösterreich',o:['Niederösterreich','Oberösterreich','Steiermark']},
+    {q:'Welche Sprachen spricht man in Wien?',a:'Deutsch und Wienerisch',o:['Deutsch und Wienerisch','Nur Englisch','Französisch']},
+    {q:'Was ist die Donauinsel?',a:'Ein Erholungsgebiet',o:['Ein Erholungsgebiet','Ein Einkaufszentrum','Ein Flughafen']},
+    {q:'Welche Tiere grasen auf der Donauinsel?',a:'Mähschafe',o:['Mähschafe','Kühe','Pferde']},
+    {q:'Wie viele Mähschafe gibt es auf der Donauinsel?',a:'70',o:['70','10','500']},
+    {q:'Was ist das ZOOM?',a:'Ein Kindermuseum',o:['Ein Kindermuseum','Ein Kino','Ein Supermarkt']},
+    {q:'Wien ist die einzige Stadt Österreichs mit...?',a:'U-Bahn',o:['U-Bahn','Flughafen','Bahnhof']}
+  ],
+  
+  gewaesser: [
+    {q:'Wie heißt der größte See Österreichs?',a:'Neusiedler See',o:['Neusiedler See','Bodensee','Attersee']},
+    {q:'Welcher Fluss fließt durch Wien?',a:'Donau',o:['Donau','Inn','Mur']},
+    {q:'Was ist ein Bach?',a:'Ein kleines fließendes Gewässer',o:['Ein kleines fließendes Gewässer','Ein großer See','Ein Ozean']},
+    {q:'Was ist ein Teich?',a:'Ein kleines stehendes Gewässer',o:['Ein kleines stehendes Gewässer','Ein Fluss','Ein Meer']},
+    {q:'Woher kommt das Wasser in der Alten Donau?',a:'Von der Donau',o:['Von der Donau','Vom Regen','Aus dem Meer']},
+    {q:'Was ist ein See?',a:'Stehendes Gewässer',o:['Stehendes Gewässer','Fließendes Gewässer','Salzwasser']},
+    {q:'Was ist ein Fluss?',a:'Fließendes Gewässer',o:['Fließendes Gewässer','Stehendes Gewässer','Gefrorenes Wasser']},
+    {q:'Wo mündet die Donau?',a:'Ins Schwarze Meer',o:['Ins Schwarze Meer','In die Nordsee','Ins Mittelmeer']},
+    {q:'Welches Wasser ist salzig?',a:'Meerwasser',o:['Meerwasser','Flusswasser','Regenwasser']},
+    {q:'Was lebt in Gewässern?',a:'Fische, Frösche, Pflanzen',o:['Fische, Frösche, Pflanzen','Nur Steine','Nur Sand']},
+    {q:'Die Donau ist der wievieltgrößte Fluss Europas?',a:'Zweitgrößte',o:['Zweitgrößte','Größte','Drittgrößte']},
+    {q:'Wie hieß der Donaukanal früher?',a:'Kleine Donau',o:['Kleine Donau','Große Donau','Wiener Donau']},
+    {q:'Welcher kleine Fluss fließt durch Wien?',a:'Wienfluss',o:['Wienfluss','Rheinfluss','Innfluss']},
+    {q:'Warum wurde die Donau begradigt?',a:'Wegen Hochwasser',o:['Wegen Hochwasser','Wegen Fischen','Wegen Schiffen']},
+    {q:'Was ist die Neue Donau?',a:'Ein Entlastungsgerinne',o:['Ein Entlastungsgerinne','Ein See','Ein Kanal']},
+    {q:'Was liegt zwischen Donau und Neuer Donau?',a:'Die Donauinsel',o:['Die Donauinsel','Ein Berg','Eine Brücke']},
+    {q:'Wie heißt der Bach im Süden von Wien?',a:'Liesing',o:['Liesing','Döbling','Floridsdorf']},
+    {q:'Welche zwei alten Donauarme blieben erhalten?',a:'Donaukanal und Alte Donau',o:['Donaukanal und Alte Donau','Neue Donau und Wienfluss','Liesing und Donau']},
+    {q:'Wozu laden die Gewässer in Wien ein?',a:'Baden, Fischen, Freizeit',o:['Baden, Fischen, Freizeit','Arbeiten','Bauen']},
+    {q:'Was kann man an der Alten Donau machen?',a:'Baden, Segeln, Bootfahren',o:['Baden, Segeln, Bootfahren','Skifahren','Bergsteigen']}
+  ],
+  
+  wappen: [
+    {q:'Was zeigt das Wappen von Floridsdorf?',a:'Vase mit 3 Blumen',o:['Vase mit 3 Blumen','Einen Löwen','Einen Adler']},
+    {q:'Was zeigt das Wappen von Leopoldau?',a:'Arm mit 5 Ähren',o:['Arm mit 5 Ähren','Vase mit Blumen','Zwei Säcke']},
+    {q:'Was zeigt das Wappen von Stammersdorf?',a:'1 Laubbaum und 3 Nadelbäume',o:['1 Laubbaum und 3 Nadelbäume','Arm mit Ähren','Blumen']},
+    {q:'Was zeigt das Wappen von Jedlesee?',a:'M und L für Maria Loretto',o:['M und L für Maria Loretto','Einen Torturm','Gekreuzte Säcke']},
+    {q:'Was zeigt das Wappen von Groß-Jedlersdorf?',a:'2 gekreuzte Säcke',o:['2 gekreuzte Säcke','Einen Arm','Blumen']},
+    {q:'Was zeigt das Wappen von Strebersdorf?',a:'Torturm mit Fahnen',o:['Torturm mit Fahnen','Bäume','Ähren']},
+    {q:'Welche Farben hat das Donaufelder Wappen?',a:'Grün, Rot, Schwarz',o:['Grün, Rot, Schwarz','Blau, Gelb','Rot, Weiß']},
+    {q:'Wie viele Blumen hat das Floridsdorfer Wappen?',a:'3',o:['3','5','7']},
+    {q:'Was bedeuten Ähren im Wappen?',a:'Landwirtschaft',o:['Landwirtschaft','Fischerei','Bergbau']},
+    {q:'Was bedeuten Bäume im Wappen?',a:'Wald und Natur',o:['Wald und Natur','Industrie','Handel']},
+    {q:'Wofür stehen die Säcke im Wappen?',a:'Handel und Gewerbe',o:['Handel und Gewerbe','Fischerei','Musik']}
+  ],
+  
+  internet: [
+    {q:'Was bedeutet WWW?',a:'World Wide Web',o:['World Wide Web','Welt Weites Wissen','Wien Web Werk']},
+    {q:'Was ist ein Browser?',a:'Programm zum Internet surfen',o:['Programm zum Internet surfen','Ein Spiel','Ein Virus']},
+    {q:'Was ist ein Passwort?',a:'Geheimer Zugangsschlüssel',o:['Geheimer Zugangsschlüssel','Eine E-Mail','Ein Bild']},
+    {q:'Was sollte man NIE im Internet teilen?',a:'Passwörter und Adresse',o:['Passwörter und Adresse','Hobbys','Lieblingsbücher']},
+    {q:'Was ist Spam?',a:'Unerwünschte Nachrichten',o:['Unerwünschte Nachrichten','Ein Spiel','Ein Browser']},
+    {q:'Was bedeutet "online"?',a:'Mit dem Internet verbunden',o:['Mit dem Internet verbunden','Computer ist aus','Im Schlafmodus']},
+    {q:'Was ist eine E-Mail?',a:'Elektronische Post',o:['Elektronische Post','Ein Spiel','Ein Video']},
+    {q:'Was ist ein Link?',a:'Verbindung zu einer anderen Seite',o:['Verbindung zu einer anderen Seite','Ein Bild','Ein Passwort']},
+    {q:'Was ist ein sicheres Passwort?',a:'Buchstaben, Zahlen, Zeichen',o:['Buchstaben, Zahlen, Zeichen','Nur 123456','Der eigene Name']},
+    {q:'Was ist ein Download?',a:'Datei herunterladen',o:['Datei herunterladen','Datei löschen','Computer ausschalten']},
+    {q:'Wie heißen Verbindungen im Internet auch?',a:'Hyperlinks',o:['Hyperlinks','Superlinks','Megalinks']},
+    {q:'Wie sind verlinkte Wörter oft gekennzeichnet?',a:'Unterstrichen, farbig oder fett',o:['Unterstrichen, farbig oder fett','Unsichtbar','Durchgestrichen']},
+    {q:'Was kann man außer Wörtern noch verlinken?',a:'Bilder und Dateien',o:['Bilder und Dateien','Nur Texte','Nichts anderes']},
+    {q:'Was muss man tun, um einem Link zu folgen?',a:'Antippen oder anklicken',o:['Antippen oder anklicken','Laut rufen','Warten']},
+    {q:'Wo erscheint die verknüpfte Seite wenn man klickt?',a:'Auf dem Bildschirm',o:['Auf dem Bildschirm','Im Drucker','Im Lautsprecher']},
+    {q:'Wo können Links versteckt sein?',a:'Hinter Texten, Wörtern, Bildern',o:['Hinter Texten, Wörtern, Bildern','Nirgends','Nur in E-Mails']},
+    {q:'Was steht manchmal als Symbol vor verlinkten Wörtern?',a:'Ein kleiner Pfeil',o:['Ein kleiner Pfeil','Ein Herz','Ein Stern']},
+    {q:'Nenne zwei bekannte Browser!',a:'Firefox und Chrome',o:['Firefox und Chrome','Word und Excel','Instagram und TikTok']},
+    {q:'Was ist der Browser?',a:'Dein Fenster in die Internet-Welt',o:['Dein Fenster in die Internet-Welt','Ein Virus','Ein Spiel']},
+    {q:'Was sind Pop-Ups?',a:'Plötzlich erscheinende Fenster',o:['Plötzlich erscheinende Fenster','Hilfreiche Programme','Neue Browser']},
+    {q:'Was sollte man mit Pop-Ups machen?',a:'Schließen oder ausweichen',o:['Schließen oder ausweichen','Immer anklicken','Herunterladen']},
+    {q:'Wie nennt man das Steuern von Seite zu Seite?',a:'Navigieren',o:['Navigieren','Fliegen','Schwimmen']},
+    {q:'Wie bedient man Links am Tablet?',a:'Tippen',o:['Tippen','Pusten','Schütteln']},
+    {q:'Wie bedient man Links am PC?',a:'Klicken',o:['Klicken','Tippen','Sprechen']}
+  ]
+};
+
+// Topics config
+const topics = [
+  {id:'wasser',icon:'💧',name:'Wasser',cat:'Natur'},
+  {id:'strom',icon:'⚡',name:'Strom',cat:'Natur'},
+  {id:'ei',icon:'🥚',name:'Ei & Küken',cat:'Natur'},
+  {id:'huhn',icon:'🐔',name:'Huhn',cat:'Natur'},
+  {id:'floridsdorf',icon:'🏠',name:'Floridsdorf (Bezirk)',cat:'Heimat'},
+  {id:'floridsdorf_ort',icon:'🏘️',name:'Floridsdorf (Ort)',cat:'Bezirksteile'},
+  {id:'donaufeld',icon:'⛪',name:'Donaufeld',cat:'Bezirksteile'},
+  {id:'grossjedlersdorf',icon:'⚔️',name:'Groß Jedlersdorf',cat:'Bezirksteile'},
+  {id:'jedlesee',icon:'🚣',name:'Jedlesee',cat:'Bezirksteile'},
+  {id:'leopoldau',icon:'🌾',name:'Leopoldau',cat:'Bezirksteile'},
+  {id:'stammersdorf',icon:'🍇',name:'Stammersdorf',cat:'Bezirksteile'},
+  {id:'strebersdorf',icon:'🏰',name:'Strebersdorf',cat:'Bezirksteile'},
+  {id:'bezirk21',icon:'🗺️',name:'21. Bezirk Übersicht',cat:'Bezirksteile'},
+  {id:'wien',icon:'🏛️',name:'Wien',cat:'Heimat'},
+  {id:'gewaesser',icon:'🌊',name:'Gewässer',cat:'Heimat'},
+  {id:'wappen',icon:'🛡️',name:'Wappen',cat:'Heimat'},
+  {id:'internet',icon:'💻',name:'Internet',cat:'Digital'}
+];
+
+// Wahr/Falsch
+const wahrFalsch = {
+  wasser: [
+    {s:'Wasser gefriert bei 0°C.',w:true},
+    {s:'Dampf ist fest.',w:false},
+    {s:'Eis ist flüssig.',w:false},
+    {s:'Wasser siedet bei 100°C.',w:true},
+    {s:'Beim Schmelzen wird Eis zu Wasser.',w:true},
+    {s:'Beim Kondensieren wird Dampf zu Eis.',w:false}
+  ],
+  strom: [
+    {s:'Metall leitet Strom.',w:true},
+    {s:'Gummi leitet Strom.',w:false},
+    {s:'Ein Stromkreis braucht eine Stromquelle.',w:true},
+    {s:'Holz ist ein guter Stromleiter.',w:false},
+    {s:'LED-Lampen verbrauchen weniger Energie als Glühbirnen.',w:true},
+    {s:'Die Glühbirne wurde 1999 erfunden.',w:false},
+    {s:'Die Glühbirne wurde 1879 erfunden.',w:true},
+    {s:'Thomas Edison erfand die Glühbirne.',w:true},
+    {s:'Der Glühdraht bleibt kalt.',w:false},
+    {s:'Das Glas der Glühbirne heißt Glaskolben.',w:true},
+    {s:'Kupfer leitet Strom.',w:true},
+    {s:'Plastik leitet Strom.',w:false},
+    {s:'Ein offener Stromkreis funktioniert nicht.',w:true},
+    {s:'Batterien haben Plus und Minus.',w:true}
+  ],
+  huhn: [
+    {s:'Ein Huhn brütet 21 Tage.',w:true},
+    {s:'Der Hahn legt Eier.',w:false},
+    {s:'Hühner können kurze Strecken fliegen.',w:true},
+    {s:'Das Küken benutzt den Eizahn zum Schlüpfen.',w:true},
+    {s:'Hühner schlafen im Wasser.',w:false},
+    {s:'Eine Henne legt ca. 250-300 Eier pro Jahr.',w:true}
+  ],
+  internet: [
+    {s:'WWW bedeutet World Wide Web.',w:true},
+    {s:'Man sollte sein Passwort mit Freunden teilen.',w:false},
+    {s:'Ein Browser ist ein Programm zum Surfen.',w:true},
+    {s:'Pop-Ups sollte man immer anklicken.',w:false},
+    {s:'Hyperlinks verbinden Internetseiten.',w:true},
+    {s:'Firefox ist ein Browser.',w:true},
+    {s:'Ein Link ist eine Verbindung zu einer anderen Seite.',w:true},
+    {s:'Links heißen auch Hyperlinks.',w:true},
+    {s:'Verlinkte Wörter sind oft unterstrichen.',w:true},
+    {s:'Man kann nur Wörter verlinken.',w:false},
+    {s:'Auch Bilder können verlinkt sein.',w:true},
+    {s:'Vor Links steht manchmal ein kleiner Pfeil.',w:true},
+    {s:'Um einem Link zu folgen muss man ihn anklicken.',w:true},
+    {s:'Chrome ist ein Browser.',w:true},
+    {s:'Pop-Ups sind hilfreiche Fenster die man anklicken soll.',w:false},
+    {s:'Am Tablet tippt man auf Links.',w:true},
+    {s:'Am PC klickt man auf Links.',w:true}
+  ],
+  wien: [
+    {s:'Wien hat 23 Bezirke.',w:true},
+    {s:'Wien ist die Hauptstadt von Deutschland.',w:false},
+    {s:'Die Donau fließt durch Wien.',w:true},
+    {s:'In Wien leben etwa 2 Millionen Menschen.',w:true},
+    {s:'Das Riesenrad steht im Stephansdom.',w:false},
+    {s:'Niederösterreich umgibt Wien.',w:true},
+    {s:'Wien ist die Bundeshauptstadt von Österreich.',w:true},
+    {s:'Wien wird von Oberösterreich umgeben.',w:false},
+    {s:'Die Sachertorte ist eine Wiener Spezialität.',w:true},
+    {s:'Wien ist die einzige Stadt Österreichs mit U-Bahn.',w:true},
+    {s:'Auf der Donauinsel grasen Kühe.',w:false},
+    {s:'Der Donauturm ist ein hoher Turm in Wien.',w:true},
+    {s:'Die Ringstraße ist eine wichtige Straße in Wien.',w:true},
+    {s:'Das ZOOM ist ein Kindermuseum in Wien.',w:true},
+    {s:'In Wien leben keine Wildtiere.',w:false}
+  ],
+  gewaesser: [
+    {s:'Die Donau ist der größte Fluss Europas.',w:false},
+    {s:'Die Donauinsel liegt zwischen Donau und Neuer Donau.',w:true},
+    {s:'Der Wienfluss fließt durch Wien.',w:true},
+    {s:'Die Alte Donau ist ein stehendes Gewässer.',w:true},
+    {s:'Die Donau mündet ins Mittelmeer.',w:false},
+    {s:'Die Neue Donau ist ein Entlastungsgerinne.',w:true},
+    {s:'Die Donau ist der zweitgrößte Fluss Europas.',w:true},
+    {s:'Der Donaukanal hieß früher kleine Donau.',w:true},
+    {s:'Die Donau wurde wegen Hochwasser begradigt.',w:true},
+    {s:'Die Alte Donau wurde zugeschüttet.',w:false},
+    {s:'Die Donauinsel ist ein Erholungsgebiet.',w:true},
+    {s:'Die Liesing fließt durch den Norden Wiens.',w:false},
+    {s:'Der Donaukanal ist ein alter Donauarm.',w:true}
+  ],
+  floridsdorf: [
+    {s:'Floridsdorf wurde 1786 gegründet.',w:true},
+    {s:'Floridus Leeb war der Gründer von Floridsdorf.',w:true},
+    {s:'Floridsdorf ist der kleinste Bezirk Wiens.',w:false},
+    {s:'Das Amtshaus steht am Spitz.',w:true},
+    {s:'Die U1 fährt nach Floridsdorf.',w:false},
+    {s:'Floridsdorf wurde 1904 nach Wien eingemeindet.',w:true},
+    {s:'Im 2. Weltkrieg erlitt Floridsdorf Bombenschäden.',w:true},
+    {s:'Floridsdorf hat den 22. Bezirk als Nummer.',w:false}
+  ],
+  bezirksteile: [
+    {s:'Jedlesee ist der älteste Bezirksteil von Floridsdorf.',w:true},
+    {s:'Stammersdorf ist bekannt für Weinbau.',w:true},
+    {s:'Das Kugelkreuz steht in der Siemensstraße.',w:true},
+    {s:'Donaufeld hieß früher "Neu Leopoldau".',w:true},
+    {s:'Groß Jedlersdorf hieß ursprünglich Urlingestorf.',w:true},
+    {s:'Die Leopoldauer wehrten sich gegen die Eingemeindung.',w:true},
+    {s:'Strebersdorf wurde erstmals 1078 erwähnt.',w:true},
+    {s:'Der Karl-Seitz-Hof steht in Stammersdorf.',w:false},
+    {s:'Der Marchfeldkanal ist etwa 19 km lang.',w:true},
+    {s:'Die Blut Christi Kirche hat einen 40m hohen pyramidenförmigen Turm.',w:true}
+  ]
+};
+
+// Sortieren
+const sortData = {
+  kueken: {
+    name: '🐣 Küken-Entwicklung',
+    items: ['Henne legt Ei','Henne brütet 21 Tage','Küken entwickelt sich','Küken pickt Schale an','Küken schlüpft','Küken trocknet']
+  },
+  wasserkreislauf: {
+    name: '💧 Wasserkreislauf',
+    items: ['Sonne erwärmt Wasser','Wasser verdunstet','Dampf steigt auf','Wolken bilden sich','Regen fällt','Wasser fließt zurück']
+  },
+  gluehbirne: {
+    name: '💡 Stromfluss Glühbirne',
+    items: ['Strom kommt aus Batterie','Strom fließt durch Kabel','Strom erreicht Kontaktplättchen','Strom fließt durch Glühdraht','Glühdraht wird heiß','Licht entsteht']
+  },
+  eingemeindung: {
+    name: '📜 Eingemeindung nach Wien',
+    items: ['1894: Großgemeinde Floridsdorf','1904: Floridsdorf wird 21. Bezirk','1904: Leopoldau eingemeindet','1904: Teil Strebersdorf eingemeindet','1910: Ganz Strebersdorf eingemeindet']
+  }
+};
+
+// Lückentext
+const luecken = {
+  wasser: [
+    {text:'Bei 0°C ___ Wasser zu Eis.',answer:'gefriert',accept:['gefriert','friert','Gefriert']},
+    {text:'Bei 100°C ___ Wasser.',answer:'siedet',accept:['siedet','Siedet','kocht']},
+    {text:'Eis ist im ___ Zustand.',answer:'festen',accept:['festen','Festen','fest']},
+    {text:'Dampf ist im ___ Zustand.',answer:'gasförmigen',accept:['gasförmigen','Gasförmigen','gasförmig']}
+  ],
+  strom: [
+    {text:'___ leitet Strom, Gummi nicht.',answer:'Metall',accept:['Metall','metall','Kupfer']},
+    {text:'Ein Stromkreis braucht Stromquelle, Leitung und ___.',answer:'Verbraucher',accept:['verbraucher','Verbraucher','Lampe']},
+    {text:'Die Glühbirne wurde ___ erfunden.',answer:'1879',accept:['1879']},
+    {text:'Der ___ in der Glühbirne leuchtet.',answer:'Glühdraht',accept:['glühdraht','Glühdraht']},
+    {text:'Material das Strom leitet heißt ___.',answer:'Leiter',accept:['leiter','Leiter']},
+    {text:'Material das nicht leitet heißt ___.',answer:'Isolator',accept:['isolator','Isolator','Nichtleiter','nichtleiter']},
+    {text:'Mit Hilfe einer Glühbirne kann man ___ erzeugen.',answer:'Licht',accept:['licht','Licht']},
+    {text:'Das Glas um die Glühbirne heißt ___.',answer:'Glaskolben',accept:['glaskolben','Glaskolben']},
+    {text:'Die Glühbirne wurde von Thomas Alva ___ erfunden.',answer:'Edison',accept:['edison','Edison']},
+    {text:'Heute verwendet man ___ statt Glühbirnen.',answer:'LED',accept:['led','LED','LED-Lampen','LEDs']},
+    {text:'LED-Lampen verbrauchen weniger ___.',answer:'Energie',accept:['energie','Energie','Strom','strom']}
+  ],
+  internet: [
+    {text:'WWW bedeutet World Wide ___.',answer:'Web',accept:['web','Web']},
+    {text:'Ein ___ ist ein Programm zum Surfen.',answer:'Browser',accept:['browser','Browser']},
+    {text:'___ verbinden Internetseiten.',answer:'Hyperlinks',accept:['hyperlinks','Hyperlinks','Links']},
+    {text:'Firefox und Chrome sind ___.',answer:'Browser',accept:['browser','Browser']},
+    {text:'Internetseiten werden im Internet miteinander ___.',answer:'verlinkt',accept:['verlinkt','Verlinkt','verbunden','Verbunden']},
+    {text:'Verbindungen im Internet heißen ___ oder kurz Links.',answer:'Hyperlinks',accept:['hyperlinks','Hyperlinks']},
+    {text:'Verlinkte Wörter sind oft fett, farbig oder ___.',answer:'unterstrichen',accept:['unterstrichen','Unterstrichen']},
+    {text:'Klickst du auf einen Link, erscheint die Seite auf deinem ___.',answer:'Bildschirm',accept:['bildschirm','Bildschirm','Monitor','monitor']},
+    {text:'Um einem Link zu folgen, muss man ihn ___ oder anklicken.',answer:'antippen',accept:['antippen','Antippen','drücken','Drücken']},
+    {text:'Der ___ ist dein Fenster in die Internet-Welt.',answer:'Browser',accept:['browser','Browser']},
+    {text:'Plötzlich erscheinende Fenster heißen ___.',answer:'Pop-Ups',accept:['pop-ups','Pop-Ups','Pop-ups','Popups','popups']},
+    {text:'Das Steuern von Seite zu Seite nennt man ___.',answer:'Navigieren',accept:['navigieren','Navigieren']},
+    {text:'Am Tablet ___ du auf Links, am PC klickst du.',answer:'tippst',accept:['tippst','Tippst','tippt']}
+  ],
+  floridsdorf: [
+    {text:'Floridsdorf wurde ___ von Floridus Leeb gegründet.',answer:'1786',accept:['1786']},
+    {text:'Floridsdorf ist der ___ Bezirk Wiens.',answer:'zweitgrößte',accept:['zweitgrößte','Zweitgrößte','2. größte']},
+    {text:'Das Amtshaus steht am ___.',answer:'Spitz',accept:['spitz','Spitz']},
+    {text:'Die ___ fährt durch Floridsdorf.',answer:'U6',accept:['U6','u6']}
+  ],
+  jedlesee: [
+    {text:'Jedlesee ist der ___ Bezirksteil Floridsdorfs.',answer:'älteste',accept:['älteste','Älteste']},
+    {text:'Jedlesee bedeutet "See des ___".',answer:'Ulrich',accept:['ulrich','Ulrich']},
+    {text:'Trotz des ständigen ___ blieben die Leute dort.',answer:'Hochwassers',accept:['hochwassers','Hochwassers','Hochwasser']},
+    {text:'Die Leute verdienten Geld mit ___ über die Donau.',answer:'Fähren',accept:['fähren','Fähren']}
+  ],
+  leopoldau: [
+    {text:'Die Menschen früher lebten vom ___.',answer:'Fischfang',accept:['fischfang','Fischfang']},
+    {text:'Das Volk verwechselte "___ " mit "Leopold".',answer:'Eupolt',accept:['eupolt','Eupolt']},
+    {text:'Das Kugelkreuz steht an der ___.',answer:'Siemensstraße',accept:['siemensstraße','Siemensstraße']},
+    {text:'Seit ___ hat Leopoldau eine eigene Schule.',answer:'1600',accept:['1600','um 1600']}
+  ],
+  stammersdorf: [
+    {text:'Stammersdorf wurde ___ erstmals urkundlich erwähnt.',answer:'1108',accept:['1108']},
+    {text:'Stammersdorf hieß früher ___.',answer:'Stenmarsdorf',accept:['stenmarsdorf','Stenmarsdorf']},
+    {text:'Heute ist Stammersdorf ein beliebter Wiener ___.',answer:'Heurigenort',accept:['heurigenort','Heurigenort']},
+    {text:'Stammersdorf wurde von Ungarn, Schweden und ___ zerstört.',answer:'Türken',accept:['türken','Türken']}
+  ],
+  strebersdorf: [
+    {text:'Strebersdorf war früher eine ___.',answer:'Fischersiedlung',accept:['fischersiedlung','Fischersiedlung']},
+    {text:'___ zerstörte 1440 den ganzen Ort.',answer:'Hochwasser',accept:['hochwasser','Hochwasser','Ein Hochwasser']},
+    {text:'Die Pest verschonte Strebersdorf nicht. 1679 starb mehr als ein ___ der Bevölkerung.',answer:'Drittel',accept:['drittel','Drittel']},
+    {text:'Das Schloss heißt heute ___.',answer:'Marienheim',accept:['marienheim','Marienheim']}
+  ],
+  grossjedlersdorf: [
+    {text:'Der ursprüngliche Name war ___.',answer:'Urlingestorf',accept:['urlingestorf','Urlingestorf']},
+    {text:'1529 wurde der Ort von den ___ zerstört.',answer:'Türken',accept:['türken','Türken']},
+    {text:'Das Trillerkreuz steht an der ___ Straße 97-99.',answer:'Brünner',accept:['brünner','Brünner']},
+    {text:'Der Marchfeldkanal ist etwa ___ km lang.',answer:'19',accept:['19','neunzehn']}
+  ],
+  wien: [
+    {text:'Wien ist die ___ von Österreich.',answer:'Bundeshauptstadt',accept:['bundeshauptstadt','Bundeshauptstadt','Hauptstadt','hauptstadt']},
+    {text:'In Wien leben rund ___ Millionen Menschen.',answer:'2',accept:['2','zwei','Zwei']},
+    {text:'Wien wird vom Bundesland ___ umgeben.',answer:'Niederösterreich',accept:['niederösterreich','Niederösterreich']},
+    {text:'Das Wiener ___ ist eine berühmte Spezialität.',answer:'Schnitzel',accept:['schnitzel','Schnitzel']},
+    {text:'Auf der Donauinsel grasen 70 ___.',answer:'Mähschafe',accept:['mähschafe','Mähschafe','Schafe','schafe']},
+    {text:'Der ___ ist ein hoher Turm in Wien.',answer:'Donauturm',accept:['donauturm','Donauturm']},
+    {text:'Die ___ ist eine wichtige Straße rund um die Wiener Innenstadt.',answer:'Ringstraße',accept:['ringstraße','Ringstraße','Ring','ring']}
+  ],
+  gewaesser: [
+    {text:'Die Donau ist der ___ Fluss Europas.',answer:'zweitgrößte',accept:['zweitgrößte','Zweitgrößte','zweitgroesste','2. größte']},
+    {text:'Der Donaukanal hieß früher ___ Donau.',answer:'kleine',accept:['kleine','Kleine']},
+    {text:'Wegen ___ wurde die Donau begradigt.',answer:'Hochwasser',accept:['hochwasser','Hochwasser']},
+    {text:'Die ___ Donau ist ein Entlastungsgerinne.',answer:'Neue',accept:['neue','Neue']},
+    {text:'Die Donauinsel ist heute ein beliebtes ___.',answer:'Erholungsgebiet',accept:['erholungsgebiet','Erholungsgebiet']},
+    {text:'Der ___ zählt zu den wichtigsten Gewässern Wiens.',answer:'Wienfluss',accept:['wienfluss','Wienfluss']}
+  ]
+};
+
+// Memory pairs
+const memoryData = {
+  wasser: [
+    {a:'💧 Wasser',b:'flüssig'},
+    {a:'🧊 Eis',b:'fest'},
+    {a:'☁️ Dampf',b:'gasförmig'},
+    {a:'🌡️ 0°C',b:'Gefrierpunkt'},
+    {a:'🌡️ 100°C',b:'Siedepunkt'},
+    {a:'❄️→💧',b:'Schmelzen'}
+  ],
+  wappen: [
+    {a:'🌸 Floridsdorf',b:'Vase + 3 Blumen'},
+    {a:'🌾 Leopoldau',b:'Arm + 5 Ähren'},
+    {a:'🌲 Stammersdorf',b:'Laub + Nadelbäume'},
+    {a:'✝️ Jedlesee',b:'M + L'},
+    {a:'👜 Gr-Jedlersdorf',b:'2 Säcke'},
+    {a:'🏰 Strebersdorf',b:'Torturm'}
+  ],
+  sehenswuerdigkeiten: [
+    {a:'⛪ Pfarrkirche',b:'Donaufeld'},
+    {a:'✝️ Trillerkreuz',b:'Gr-Jedlersdorf'},
+    {a:'🏛️ Amtshaus',b:'Floridsdorf'},
+    {a:'⚱️ Kugelkreuz',b:'Leopoldau'},
+    {a:'🏰 Marienheim',b:'Strebersdorf'},
+    {a:'🍷 Weinanbau',b:'Stammersdorf'},
+    {a:'🏠 Karl-Seitz-Hof',b:'Jedlesee'},
+    {a:'💧 Marchfeldkanal',b:'Gr-Jedlersdorf'}
+  ],
+  gebaeude: [
+    {a:'Amtshaus',b:'Am Spitz'},
+    {a:'Karl-Seitz-Hof',b:'Jedleseer Straße'},
+    {a:'Bezirksmuseum',b:'Prager Straße'},
+    {a:'Marienheim',b:'Anton-Böck-Gasse'},
+    {a:'Kugelkreuz',b:'Siemensstraße'},
+    {a:'Trillerkreuz',b:'Brünner Str. 97-99'}
+  ],
+  wien: [
+    {a:'⛪ Stephansdom',b:'Kirche'},
+    {a:'🎡 Riesenrad',b:'Prater'},
+    {a:'🏰 Schönbrunn',b:'Schloss'},
+    {a:'🗼 Donauturm',b:'252 Meter'},
+    {a:'🏛️ Rathaus',b:'Stadtregierung'},
+    {a:'🦁 Tiergarten',b:'ältester Zoo'}
+  ],
+  gewaesser: [
+    {a:'🌊 Donau',b:'2. größter Fluss'},
+    {a:'🏊 Alte Donau',b:'Badegewässer'},
+    {a:'💧 Wienfluss',b:'kleiner Fluss'},
+    {a:'🏝️ Donauinsel',b:'Erholungsgebiet'},
+    {a:'🌊 Neue Donau',b:'Entlastungsgerinne'},
+    {a:'⛵ Donaukanal',b:'kleine Donau'}
+  ],
+  internet: [
+    {a:'🌐 Browser',b:'Firefox, Chrome'},
+    {a:'🔗 Link',b:'Verbindung'},
+    {a:'🔗 Hyperlink',b:'Verknüpfung'},
+    {a:'⬇️ Download',b:'Herunterladen'},
+    {a:'📧 E-Mail',b:'elektronische Post'},
+    {a:'🔒 Passwort',b:'geheimer Schlüssel'},
+    {a:'⚠️ Pop-Up',b:'störendes Fenster'},
+    {a:'🧭 Navigieren',b:'Steuern'}
+  ],
+  gluehbirne: [
+    {a:'🔥 Glühdraht',b:'wird sehr heiß'},
+    {a:'🔮 Glaskolben',b:'Schutzglas'},
+    {a:'🔌 Sockel',b:'zum Einschrauben'},
+    {a:'👨‍🔬 Edison',b:'Erfinder'},
+    {a:'📅 1879',b:'Erfindungsjahr'},
+    {a:'💡 LED',b:'spart Energie'},
+    {a:'⚡ Strom',b:'fließt durch'},
+    {a:'💡 Licht',b:'wird erzeugt'}
+  ],
+  essen: [
+    {a:'🥩 Schnitzel',b:'paniertes Fleisch'},
+    {a:'🍫 Sachertorte',b:'Schokoladentorte'},
+    {a:'🥞 Kaiserschmarrn',b:'süße Mehlspeise'},
+    {a:'🍎 Apfelstrudel',b:'Obst im Teig'},
+    {a:'🥩 Tafelspitz',b:'gekochtes Rind'},
+    {a:'🥞 Palatschinken',b:'Pfannkuchen'},
+    {a:'🌭 Würstel',b:'Imbiss'},
+    {a:'☕ Melange',b:'Kaffee mit Milch'}
+  ],
+  ubahn: [
+    {a:'🔴 U1',b:'rot'},
+    {a:'🟣 U2',b:'lila'},
+    {a:'🟠 U3',b:'orange'},
+    {a:'🟢 U4',b:'grün'},
+    {a:'🟤 U6',b:'braun'},
+    {a:'🚇 Floridsdorf',b:'U6 Endstation'},
+    {a:'🚇 Stephansplatz',b:'U1, U3'},
+    {a:'🚇 Karlsplatz',b:'U1, U2, U4'}
+  ]
+};
+
+// Strom Memory
+const stromLeiter = {
+  leiter: ['Kupfer','Eisen','Aluminium','Gold','Silber','Stahl','Zink','Bronze'],
+  nichtleiter: ['Plastik','Gummi','Holz','Glas','Papier','Luft','Porzellan','Wolle']
+};
+
+// Zuordnen
+const zuordnen = {
+  strom: {
+    name: '⚡ Leiter oder Nichtleiter?',
+    left: 'Leiter',
+    right: 'Nichtleiter',
+    items: [
+      {text:'Kupfer',cat:'l'},{text:'Plastik',cat:'r'},
+      {text:'Eisen',cat:'l'},{text:'Gummi',cat:'r'},
+      {text:'Aluminium',cat:'l'},{text:'Holz',cat:'r'},
+      {text:'Gold',cat:'l'},{text:'Glas',cat:'r'}
+    ]
+  },
+  spezialitaeten: {
+    name: '🍽️ Wiener Spezialitäten?',
+    left: 'Wiener Spezialität',
+    right: 'Keine Wiener Spezialität',
+    items: [
+      {text:'Wiener Schnitzel',cat:'l'},{text:'Hamburger',cat:'r'},
+      {text:'Kaiserschmarrn',cat:'l'},{text:'Pizza',cat:'r'},
+      {text:'Sachertorte',cat:'l'},{text:'Sushi',cat:'r'},
+      {text:'Apfelstrudel',cat:'l'},{text:'Döner',cat:'r'}
+    ]
+  },
+  bezirksteil_sehenswuerdigkeit: {
+    name: '🏛️ Sehenswürdigkeit → Bezirksteil',
+    left: 'Leopoldau / Jedlesee',
+    right: 'Stammersdorf / Strebersdorf',
+    items: [
+      {text:'Kugelkreuz',cat:'l'},{text:'Weinanbau',cat:'r'},
+      {text:'Pestsäule',cat:'l'},{text:'Marienheim',cat:'r'},
+      {text:'Karl-Seitz-Hof',cat:'l'},{text:'Wehrkirche',cat:'r'},
+      {text:'Blut Christi Kirche',cat:'l'},{text:'Kaisergedenksäule',cat:'r'}
+    ]
+  },
+  bezirksteil_jahr: {
+    name: '📅 Wann erstmals erwähnt?',
+    left: 'Vor 1100',
+    right: 'Nach 1100',
+    items: [
+      {text:'Strebersdorf (1078)',cat:'l'},{text:'Stammersdorf (1108)',cat:'r'},
+      {text:'Jedlesee (1014)',cat:'l'},{text:'Groß Jedlersdorf (1108)',cat:'r'}
+    ]
+  },
+  gewaesser: {
+    name: '🌊 Gewässer in Wien?',
+    left: 'In Wien',
+    right: 'Nicht in Wien',
+    items: [
+      {text:'Donau',cat:'l'},{text:'Rhein',cat:'r'},
+      {text:'Alte Donau',cat:'l'},{text:'Elbe',cat:'r'},
+      {text:'Neue Donau',cat:'l'},{text:'Inn',cat:'r'},
+      {text:'Donaukanal',cat:'l'},{text:'Bodensee',cat:'r'}
+    ]
+  },
+  verkehr: {
+    name: '🚃 Verkehrsmittel in Floridsdorf?',
+    left: 'In Floridsdorf',
+    right: 'Nicht in Floridsdorf',
+    items: [
+      {text:'U6',cat:'l'},{text:'U1',cat:'r'},
+      {text:'Straßenbahn 26',cat:'l'},{text:'U4',cat:'r'},
+      {text:'Bus 29A',cat:'l'},{text:'Straßenbahn 1',cat:'r'},
+      {text:'Regionalbahn',cat:'l'},{text:'U3',cat:'r'}
+    ]
+  },
+  strassen: {
+    name: '🛣️ Wichtige Straßen in Wien?',
+    left: 'Wiener Straße',
+    right: 'Keine Wiener Straße',
+    items: [
+      {text:'Ringstraße',cat:'l'},{text:'Reeperbahn',cat:'r'},
+      {text:'Gürtel',cat:'l'},{text:'Champs-Élysées',cat:'r'},
+      {text:'Südosttangente',cat:'l'},{text:'Broadway',cat:'r'},
+      {text:'Kärntner Straße',cat:'l'},{text:'Alexanderplatz',cat:'r'}
+    ]
+  },
+  tuerme: {
+    name: '🏙️ Türme in Wien?',
+    left: 'Wiener Turm',
+    right: 'Kein Wiener Turm',
+    items: [
+      {text:'Donauturm',cat:'l'},{text:'Eiffelturm',cat:'r'},
+      {text:'Millennium Tower',cat:'l'},{text:'Big Ben',cat:'r'},
+      {text:'Vienna Twin Tower',cat:'l'},{text:'Empire State Building',cat:'r'},
+      {text:'Ringturm',cat:'l'},{text:'Schiefer Turm von Pisa',cat:'r'}
+    ]
+  },
+  kultur: {
+    name: '🎭 Kultur in Wien?',
+    left: 'In Wien',
+    right: 'Nicht in Wien',
+    items: [
+      {text:'ZOOM Kindermuseum',cat:'l'},{text:'Louvre',cat:'r'},
+      {text:'Theater der Jugend',cat:'l'},{text:'Disneyland',cat:'r'},
+      {text:'Haus der Musik',cat:'l'},{text:'British Museum',cat:'r'},
+      {text:'Technisches Museum',cat:'l'},{text:'Guggenheim',cat:'r'}
+    ]
+  },
+  wildtiere: {
+    name: '🦔 Wildtiere in Wien?',
+    left: 'Lebt in Wien',
+    right: 'Lebt nicht in Wien',
+    items: [
+      {text:'Igel',cat:'l'},{text:'Löwe',cat:'r'},
+      {text:'Eichhörnchen',cat:'l'},{text:'Elefant',cat:'r'},
+      {text:'Fuchs',cat:'l'},{text:'Känguru',cat:'r'},
+      {text:'Eisvogel',cat:'l'},{text:'Pinguin',cat:'r'}
+    ]
+  }
+};
+
+// Utility
+function shuffle(arr) {
+  let a = [...arr];
+  for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function render(h){document.getElementById('app').innerHTML=h;}
+
+function saveStars(tid,s){
+  let old = stars[tid] || 0;
+  if(s > old){stars[tid]=s;localStorage.setItem('andreas_stars',JSON.stringify(stars));}
+}
+
+function getStarsHTML(tid){
+  let s = stars[tid] || 0;
+  return s > 0 ? '<span class="stars">' + '⭐'.repeat(s) + '</span>' : '';
+}
+
+function calcStars(correct,total){
+  let pct = correct/total;
+  if(pct >= 0.9) return 3;
+  if(pct >= 0.7) return 2;
+  if(pct >= 0.5) return 1;
+  return 0;
+}
+
+// Main Menu
+function showMenu(){
+  topic = null;
+  let h = `<div class="header"><h2>🎓 Andreas Lern-App</h2></div>
+    <div class="tabs">
+      <button class="tab ${tab==='quiz'?'active':''}" onclick="tab='quiz';showMenu()">📝 Quiz</button>
+      <button class="tab ${tab==='run'?'active':''}" onclick="tab='run';showMenu()">🏃 Run</button>
+      <button class="tab ${tab==='runner3d'?'active':''}" onclick="tab='runner3d';showMenu()">🚀 3D</button>
+      <button class="tab ${tab==='spiele'?'active':''}" onclick="tab='spiele';showMenu()">🎮 Spiele</button>
+    </div>`;
+  
+  if(tab === 'quiz' || tab === 'run' || tab === 'runner3d'){
+    let cats = {};
+    topics.forEach(t => {if(Q[t.id]){if(!cats[t.cat])cats[t.cat]=[];cats[t.cat].push(t);}});
+    
+    if(tab === 'runner3d'){
+      h += `<div class="box"><p>🚀 Wähle die richtige Spur!</p></div>`;
+    }
+    
+    for(let c in cats){
+      h += `<div class="cat">${c}</div>`;
+      cats[c].forEach(t => {
+        let prefix = tab==='quiz'?'quiz':tab==='run'?'run':'3d';
+        let func = tab==='quiz'?'startQuiz':tab==='run'?'startRun':'start3DRunner';
+        h += `<button class="btn btn-topic" onclick="${func}('${t.id}')">
+          <span style="font-size:1.5rem">${t.icon}</span>
+          <span>${t.name}</span>
+          ${getStarsHTML(prefix+'_'+t.id)}
+        </button>`;
+      });
+    }
+  } else {
+    // Spiele Tab
+    h += `
+    <div class="game-section" style="border-left:4px solid #3b82f6">
+      <div class="game-section-title">🧠 Memory-Spiele</div>
+      <div class="subcat">Natur & Technik</div>
+      <button class="btn btn-topic" onclick="startMemory('wasser')"><span>💧</span><span>Wasser</span>${getStarsHTML('mem_wasser')}</button>
+      <button class="btn btn-topic" onclick="startMemory('gluehbirne')"><span>💡</span><span>Glühbirne</span>${getStarsHTML('mem_gluehbirne')}</button>
+      <button class="btn btn-topic" onclick="startStromMemory()"><span>⚡</span><span>Stromleiter</span>${getStarsHTML('mem_strom')}</button>
+      <div class="subcat">Floridsdorf</div>
+      <button class="btn btn-topic" onclick="startMemory('wappen')"><span>🛡️</span><span>Wappen</span>${getStarsHTML('mem_wappen')}</button>
+      <button class="btn btn-topic" onclick="startMemory('sehenswuerdigkeiten')"><span>🏛️</span><span>Sehenswürdigkeiten</span>${getStarsHTML('mem_sehenswuerdigkeiten')}</button>
+      <button class="btn btn-topic" onclick="startMemory('gebaeude')"><span>🏢</span><span>Gebäude & Standorte</span>${getStarsHTML('mem_gebaeude')}</button>
+      <div class="subcat">Wien</div>
+      <button class="btn btn-topic" onclick="startMemory('wien')"><span>🏛️</span><span>Wien Wahrzeichen</span>${getStarsHTML('mem_wien')}</button>
+      <button class="btn btn-topic" onclick="startMemory('gewaesser')"><span>🌊</span><span>Gewässer</span>${getStarsHTML('mem_gewaesser')}</button>
+      <button class="btn btn-topic" onclick="startMemory('essen')"><span>🍽️</span><span>Wiener Essen</span>${getStarsHTML('mem_essen')}</button>
+      <button class="btn btn-topic" onclick="startMemory('ubahn')"><span>🚇</span><span>U-Bahn</span>${getStarsHTML('mem_ubahn')}</button>
+      <button class="btn btn-topic" onclick="startMemory('internet')"><span>💻</span><span>Internet</span>${getStarsHTML('mem_internet')}</button>
+    </div>
+    
+    <div class="game-section" style="border-left:4px solid #f59e0b">
+      <div class="game-section-title">📊 Sortier-Spiele</div>
+      <button class="btn btn-topic" onclick="startSort('kueken')"><span>🐣</span><span>Küken-Entwicklung</span>${getStarsHTML('sort_kueken')}</button>
+      <button class="btn btn-topic" onclick="startSort('wasserkreislauf')"><span>💧</span><span>Wasserkreislauf</span>${getStarsHTML('sort_wasserkreislauf')}</button>
+      <button class="btn btn-topic" onclick="startSort('gluehbirne')"><span>💡</span><span>Stromfluss</span>${getStarsHTML('sort_gluehbirne')}</button>
+      <button class="btn btn-topic" onclick="startSort('eingemeindung')"><span>📜</span><span>Eingemeindung</span>${getStarsHTML('sort_eingemeindung')}</button>
+    </div>
+    
+    <div class="game-section" style="border-left:4px solid #10b981">
+      <div class="game-section-title">✓✗ Wahr oder Falsch</div>
+      <div class="subcat">Natur & Technik</div>
+      <button class="btn btn-topic" onclick="startWF('wasser')"><span>💧</span><span>Wasser</span>${getStarsHTML('wf_wasser')}</button>
+      <button class="btn btn-topic" onclick="startWF('strom')"><span>⚡</span><span>Strom</span>${getStarsHTML('wf_strom')}</button>
+      <button class="btn btn-topic" onclick="startWF('huhn')"><span>🐔</span><span>Huhn</span>${getStarsHTML('wf_huhn')}</button>
+      <button class="btn btn-topic" onclick="startWF('internet')"><span>💻</span><span>Internet</span>${getStarsHTML('wf_internet')}</button>
+      <div class="subcat">Heimat</div>
+      <button class="btn btn-topic" onclick="startWF('wien')"><span>🏛️</span><span>Wien</span>${getStarsHTML('wf_wien')}</button>
+      <button class="btn btn-topic" onclick="startWF('gewaesser')"><span>🌊</span><span>Gewässer</span>${getStarsHTML('wf_gewaesser')}</button>
+      <button class="btn btn-topic" onclick="startWF('floridsdorf')"><span>🏘️</span><span>Floridsdorf</span>${getStarsHTML('wf_floridsdorf')}</button>
+      <button class="btn btn-topic" onclick="startWF('bezirksteile')"><span>🗺️</span><span>Bezirksteile</span>${getStarsHTML('wf_bezirksteile')}</button>
+    </div>
+    
+    <div class="game-section" style="border-left:4px solid #8b5cf6">
+      <div class="game-section-title">🎯 Zuordnungs-Spiele</div>
+      <button class="btn btn-topic" onclick="startZuordnen('strom')"><span>⚡</span><span>Leiter zuordnen</span>${getStarsHTML('zu_strom')}</button>
+      <button class="btn btn-topic" onclick="startZuordnen('spezialitaeten')"><span>🍽️</span><span>Wiener Spezialitäten</span>${getStarsHTML('zu_spezialitaeten')}</button>
+      <button class="btn btn-topic" onclick="startZuordnen('gewaesser')"><span>🌊</span><span>Gewässer in Wien</span>${getStarsHTML('zu_gewaesser')}</button>
+      <button class="btn btn-topic" onclick="startZuordnen('verkehr')"><span>🚃</span><span>Verkehr Floridsdorf</span>${getStarsHTML('zu_verkehr')}</button>
+      <button class="btn btn-topic" onclick="startZuordnen('bezirksteil_sehenswuerdigkeit')"><span>🏛️</span><span>Sehenswürdigkeiten</span>${getStarsHTML('zu_bezirksteil_sehenswuerdigkeit')}</button>
+      <button class="btn btn-topic" onclick="startZuordnen('bezirksteil_jahr')"><span>📅</span><span>Erste Erwähnung</span>${getStarsHTML('zu_bezirksteil_jahr')}</button>
+    </div>
+    
+    <div class="game-section" style="border-left:4px solid #ec4899">
+      <div class="game-section-title">✏️ Lückentext</div>
+      <div class="subcat">Natur & Technik</div>
+      <button class="btn btn-topic" onclick="startLuecke('wasser')"><span>💧</span><span>Wasser</span>${getStarsHTML('luecke_wasser')}</button>
+      <button class="btn btn-topic" onclick="startLuecke('strom')"><span>⚡</span><span>Strom</span>${getStarsHTML('luecke_strom')}</button>
+      <button class="btn btn-topic" onclick="startLuecke('internet')"><span>💻</span><span>Internet</span>${getStarsHTML('luecke_internet')}</button>
+      <div class="subcat">Bezirksteile</div>
+      <button class="btn btn-topic" onclick="startLuecke('floridsdorf')"><span>🏘️</span><span>Floridsdorf</span>${getStarsHTML('luecke_floridsdorf')}</button>
+      <button class="btn btn-topic" onclick="startLuecke('jedlesee')"><span>🚣</span><span>Jedlesee</span>${getStarsHTML('luecke_jedlesee')}</button>
+      <button class="btn btn-topic" onclick="startLuecke('leopoldau')"><span>🌾</span><span>Leopoldau</span>${getStarsHTML('luecke_leopoldau')}</button>
+      <button class="btn btn-topic" onclick="startLuecke('stammersdorf')"><span>🍇</span><span>Stammersdorf</span>${getStarsHTML('luecke_stammersdorf')}</button>
+      <button class="btn btn-topic" onclick="startLuecke('strebersdorf')"><span>🏰</span><span>Strebersdorf</span>${getStarsHTML('luecke_strebersdorf')}</button>
+      <button class="btn btn-topic" onclick="startLuecke('grossjedlersdorf')"><span>⚔️</span><span>Groß Jedlersdorf</span>${getStarsHTML('luecke_grossjedlersdorf')}</button>
+    </div>
+    
+    <div class="game-section" style="border-left:4px solid #06b6d4">
+      <div class="game-section-title">🎮 Simulatoren</div>
+      <button class="btn btn-topic" onclick="startSim('temp')"><span>🌡️</span><span>Temperatur</span></button>
+      <button class="btn btn-topic" onclick="startSim('strom')"><span>💡</span><span>Stromkreis</span></button>
+      <button class="btn btn-topic" onclick="startSim('kreislauf')"><span>🔄</span><span>Wasserkreislauf</span></button>
+    </div>`;
+  }
+  render(h);
+}
+
+// ============ QUIZ ============
+function startQuiz(id){
+  let t = topics.find(x=>x.id===id);
+  topic = t;
+  qs = shuffle(Q[id]).slice(0,5);
+  qi = 0;
+  score = 0;
+  showQuestion();
+}
+
+function showQuestion(){
+  if(qi >= qs.length){
+    let s = calcStars(score,qs.length);
+    saveStars('quiz_'+topic.id,s);
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>${topic.icon} ${topic.name}</span></div>
+      <div class="box"><h2>${score}/${qs.length} richtig!</h2><div style="font-size:2rem;margin:1rem">${'⭐'.repeat(s) || '😢'}</div>
+      <button class="btn btn-primary" onclick="startQuiz('${topic.id}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  let q = qs[qi];
+  let opts = shuffle(q.o);
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>${topic.icon}</span><span>${qi+1}/${qs.length}</span></div>
+    <div class="progress"><div class="progress-bar" style="width:${(qi/qs.length)*100}%"></div></div>
+    <div class="box"><h3>${q.q}</h3></div>
+    ${opts.map(o=>`<button class="btn btn-answer" onclick="checkAnswer(this,'${o.replace(/'/g,"\\'")}','${q.a.replace(/'/g,"\\'")}')">${o}</button>`).join('')}`);
+}
+
+function checkAnswer(btn,sel,ans){
+  document.querySelectorAll('.btn-answer').forEach(b=>b.disabled=true);
+  if(sel===ans){btn.classList.add('correct');score++;}
+  else{btn.classList.add('wrong');document.querySelectorAll('.btn-answer').forEach(b=>{if(b.textContent===ans)b.classList.add('correct');});}
+  setTimeout(()=>{qi++;showQuestion();},1000);
+}
+
+// ============ QUIZ RUN ============
+let runTimer, runTime, runLives, runScore, runQs, runQi, runTarget;
+
+function startRun(id){
+  let t = topics.find(x=>x.id===id);
+  topic = t;
+  runQs = shuffle(Q[id]);
+  runTarget = runQs.length;
+  runQi = 0;
+  runScore = 0;
+  runLives = 3;
+  runTime = 0;
+  runTimer = setInterval(()=>{runTime++;updateRunTimer();},1000);
+  showRunQ();
+}
+
+function updateRunTimer(){
+  let el = document.getElementById('timer');
+  if(el) el.textContent = runTime + 's';
+}
+
+function showRunQ(){
+  if(runLives <= 0){
+    clearInterval(runTimer);
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>${topic.icon}</span></div>
+      <div class="box"><h2>💔 Game Over!</h2><p>${runScore}/${runTarget} richtige Antworten</p>
+      <button class="btn btn-primary" onclick="startRun('${topic.id}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  if(runScore >= runTarget){
+    clearInterval(runTimer);
+    let s = runTime <= 30 ? 3 : runTime <= 60 ? 2 : 1;
+    saveStars('run_'+topic.id,s);
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>${topic.icon}</span></div>
+      <div class="box"><h2>🎉 Gewonnen!</h2><p>Zeit: ${runTime}s</p><div style="font-size:2rem">${'⭐'.repeat(s)}</div>
+      <button class="btn btn-primary" onclick="startRun('${topic.id}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  if(runQi >= runQs.length){
+    clearInterval(runTimer);
+    let s = runScore >= runTarget * 0.9 ? 3 : runScore >= runTarget * 0.7 ? 2 : runScore >= runTarget * 0.5 ? 1 : 0;
+    if(s > 0) saveStars('run_'+topic.id,s);
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>${topic.icon}</span></div>
+      <div class="box"><h2>🏁 Fertig!</h2><p>${runScore}/${runTarget} richtig</p><p>Zeit: ${runTime}s</p>
+      <div style="font-size:2rem">${'⭐'.repeat(s)||'😢'}</div>
+      <button class="btn btn-primary" onclick="startRun('${topic.id}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  
+  let q = runQs[runQi];
+  let wrong = q.o.filter(x=>x!==q.a);
+  let wrongOpt = wrong[Math.floor(Math.random()*wrong.length)];
+  let leftCorrect = Math.random() > 0.5;
+  
+  render(`<div class="header"><button class="back-btn" onclick="clearInterval(runTimer);showMenu()">←</button><span>${topic.icon}</span><span id="timer">${runTime}s</span></div>
+    <div class="box">
+      <div class="lives">${'❤️'.repeat(runLives)}${'🖤'.repeat(3-runLives)}</div>
+      <p style="margin:.5rem 0">${runScore}/${runTarget}</p>
+      <h3 style="font-size:1rem">${q.q}</h3>
+    </div>
+    <div class="run-area">
+      <div class="run-door" onclick="checkRunAnswer(this,${leftCorrect})">
+        <div class="run-emoji">${leftCorrect?'✓':'✗'}</div>
+        <div>${leftCorrect?q.a:wrongOpt}</div>
+      </div>
+      <div class="run-door" onclick="checkRunAnswer(this,${!leftCorrect})">
+        <div class="run-emoji">${!leftCorrect?'✓':'✗'}</div>
+        <div>${!leftCorrect?q.a:wrongOpt}</div>
+      </div>
+    </div>`);
+}
+
+function checkRunAnswer(el,correct){
+  document.querySelectorAll('.run-door').forEach(d=>d.style.pointerEvents='none');
+  if(correct){el.classList.add('correct');runScore++;}
+  else{el.classList.add('wrong');runLives--;}
+  runQi++;
+  setTimeout(showRunQ,800);
+}
+
+// ============ MEMORY ============
+let memCards,memFlipped,memMatched,memLocked,memClicks;
+
+function startMemory(id){
+  let data = memoryData[id];
+  if(!data) return;
+  
+  memCards = [];
+  data.forEach((p,i)=>{
+    memCards.push({id:i,text:p.a,pair:i});
+    memCards.push({id:i,text:p.b,pair:i});
+  });
+  memCards = shuffle(memCards);
+  memFlipped = [];
+  memMatched = [];
+  memLocked = false;
+  memClicks = 0;
+  
+  renderMemory(id);
+}
+
+function renderMemory(id){
+  let total = memCards.length/2;
+  let matched = memMatched.length/2;
+  
+  if(matched >= total){
+    let s = memClicks <= total*3 ? 3 : memClicks <= total*4 ? 2 : 1;
+    saveStars('mem_'+id,s);
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>🧠 Memory</span></div>
+      <div class="box"><h2>🎉 Geschafft!</h2><p>${memClicks} Klicks</p>
+      <div style="font-size:2rem">${'⭐'.repeat(s)}</div>
+      <button class="btn btn-primary" onclick="startMemory('${id}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  
+  let h = `<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>🧠</span><span>${matched}/${total}</span></div>
+    <div class="memory-grid">`;
+  
+  memCards.forEach((c,i)=>{
+    let isFlipped = memFlipped.includes(i);
+    let isMatched = memMatched.includes(i);
+    let cls = isMatched ? 'card match' : isFlipped ? 'card flip' : 'card';
+    let txt = (isFlipped || isMatched) ? c.text : '?';
+    h += `<div class="${cls}" onclick="flipCard(${i},'${id}')">${txt}</div>`;
+  });
+  
+  h += `</div><p style="text-align:center;opacity:.7">Klicks: ${memClicks}</p>`;
+  render(h);
+}
+
+function flipCard(i,id){
+  if(memLocked || memFlipped.includes(i) || memMatched.includes(i)) return;
+  
+  memFlipped.push(i);
+  memClicks++;
+  
+  if(memFlipped.length === 2){
+    memLocked = true;
+    let [a,b] = memFlipped;
+    if(memCards[a].pair === memCards[b].pair){
+      memMatched.push(a,b);
+      memFlipped = [];
+      memLocked = false;
+      renderMemory(id);
+    } else {
+      renderMemory(id);
+      setTimeout(()=>{
+        memFlipped = [];
+        memLocked = false;
+        renderMemory(id);
+      },1200);
+    }
+  } else {
+    renderMemory(id);
+  }
+}
+
+// Strom Memory (spezial)
+function startStromMemory(){
+  let leiter = shuffle(stromLeiter.leiter).slice(0,4);
+  let nicht = shuffle(stromLeiter.nichtleiter).slice(0,4);
+  
+  memCards = [];
+  leiter.forEach((l,i)=>{
+    memCards.push({id:i,text:l,pair:i,type:'leiter'});
+    memCards.push({id:i,text:'⚡ Leiter',pair:i,type:'label'});
+  });
+  nicht.forEach((n,i)=>{
+    memCards.push({id:i+4,text:n,pair:i+4,type:'nicht'});
+    memCards.push({id:i+4,text:'🚫 Nichtleiter',pair:i+4,type:'label'});
+  });
+  
+  memCards = shuffle(memCards);
+  memFlipped = [];
+  memMatched = [];
+  memLocked = false;
+  memClicks = 0;
+  
+  renderMemory('strom');
+}
+
+// ============ WAHR/FALSCH ============
+let wfData,wfI,wfScore;
+
+function startWF(id){
+  wfData = shuffle(wahrFalsch[id]);
+  wfI = 0;
+  wfScore = 0;
+  showWF(id);
+}
+
+function showWF(id){
+  if(wfI >= wfData.length){
+    let s = calcStars(wfScore,wfData.length);
+    saveStars('wf_'+id,s);
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>✓✗</span></div>
+      <div class="box"><h2>${wfScore}/${wfData.length} richtig!</h2>
+      <div style="font-size:2rem">${'⭐'.repeat(s)||'😢'}</div>
+      <button class="btn btn-primary" onclick="startWF('${id}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  
+  let q = wfData[wfI];
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>✓✗</span><span>${wfI+1}/${wfData.length}</span></div>
+    <div class="progress"><div class="progress-bar" style="width:${(wfI/wfData.length)*100}%"></div></div>
+    <div class="box"><h3>${q.s}</h3></div>
+    <button class="btn btn-answer" style="background:#10b981" onclick="checkWF(true,${q.w},'${id}')">✓ Wahr</button>
+    <button class="btn btn-answer" style="background:#ef4444" onclick="checkWF(false,${q.w},'${id}')">✗ Falsch</button>`);
+}
+
+function checkWF(answer,correct,id){
+  document.querySelectorAll('.btn-answer').forEach(b=>b.disabled=true);
+  if(answer === correct) wfScore++;
+  wfI++;
+  setTimeout(()=>showWF(id),600);
+}
+
+// ============ SORTIEREN ============
+let sortItems,sortId;
+
+function startSort(id){
+  sortId = id;
+  sortItems = shuffle([...sortData[id].items]);
+  renderSort();
+}
+
+function renderSort(){
+  let h = `<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>📊 ${sortData[sortId].name}</span></div>
+    <div class="box"><p>Bringe die Schritte in die richtige Reihenfolge!</p></div>`;
+  
+  sortItems.forEach((item,i)=>{
+    h += `<div class="sort-item" draggable="true" ondragstart="dragStart(event,${i})" ondragover="dragOver(event)" ondrop="drop(event,${i})">
+      <div class="sort-num">${i+1}</div>
+      <span>${item}</span>
+    </div>`;
+  });
+  
+  h += `<button class="btn btn-primary" onclick="checkSort()">✓ Prüfen</button>`;
+  render(h);
+}
+
+let draggedIdx = null;
+function dragStart(e,i){draggedIdx=i;}
+function dragOver(e){e.preventDefault();}
+function drop(e,i){
+  e.preventDefault();
+  if(draggedIdx === null) return;
+  let temp = sortItems[draggedIdx];
+  sortItems.splice(draggedIdx,1);
+  sortItems.splice(i,0,temp);
+  draggedIdx = null;
+  renderSort();
+}
+
+function checkSort(){
+  let correct = sortData[sortId].items;
+  let score = 0;
+  sortItems.forEach((item,i)=>{if(item===correct[i])score++;});
+  let s = calcStars(score,correct.length);
+  saveStars('sort_'+sortId,s);
+  
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>📊</span></div>
+    <div class="box"><h2>${score}/${correct.length} richtig!</h2>
+    <div style="font-size:2rem">${'⭐'.repeat(s)||'😢'}</div></div>
+    <div class="box"><p><strong>Richtige Reihenfolge:</strong></p>
+    ${correct.map((c,i)=>`<p>${i+1}. ${c}</p>`).join('')}</div>
+    <button class="btn btn-primary" onclick="startSort('${sortId}')">🔄 Nochmal</button>
+    <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button>`);
+}
+
+// ============ ZUORDNEN ============
+let zuItems,zuId,zuScore;
+
+function startZuordnen(id){
+  zuId = id;
+  zuItems = shuffle([...zuordnen[id].items]);
+  zuScore = 0;
+  showZuordnen();
+}
+
+function showZuordnen(){
+  if(zuItems.length === 0){
+    let total = zuordnen[zuId].items.length;
+    let s = calcStars(zuScore,total);
+    saveStars('zu_'+zuId,s);
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>🎯</span></div>
+      <div class="box"><h2>${zuScore}/${total} richtig!</h2>
+      <div style="font-size:2rem">${'⭐'.repeat(s)||'😢'}</div>
+      <button class="btn btn-primary" onclick="startZuordnen('${zuId}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  
+  let item = zuItems[0];
+  let data = zuordnen[zuId];
+  
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>🎯 ${data.name}</span></div>
+    <div class="box"><h2>${item.text}</h2></div>
+    <div class="run-area">
+      <div class="run-door" onclick="checkZu('l','${item.cat}')">
+        <div class="run-emoji">👈</div>
+        <div>${data.left}</div>
+      </div>
+      <div class="run-door" onclick="checkZu('r','${item.cat}')">
+        <div class="run-emoji">👉</div>
+        <div>${data.right}</div>
+      </div>
+    </div>
+    <p style="text-align:center;opacity:.7">Noch ${zuItems.length} übrig</p>`);
+}
+
+function checkZu(choice,correct){
+  document.querySelectorAll('.run-door').forEach(d=>d.style.pointerEvents='none');
+  let doors = document.querySelectorAll('.run-door');
+  if(choice === correct){
+    zuScore++;
+    doors[choice==='l'?0:1].classList.add('correct');
+  } else {
+    doors[choice==='l'?0:1].classList.add('wrong');
+    doors[choice==='l'?1:0].classList.add('correct');
+  }
+  zuItems.shift();
+  setTimeout(showZuordnen,700);
+}
+
+// ============ LÜCKENTEXT ============
+let lueckeData,lueckeId,lueckeI;
+
+function startLuecke(id){
+  lueckeId = id;
+  lueckeData = shuffle([...luecken[id]]);
+  lueckeI = 0;
+  showLuecke();
+}
+
+function showLuecke(){
+  if(lueckeI >= lueckeData.length){
+    render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>✏️</span></div>
+      <div class="box"><h2>🎉 Geschafft!</h2>
+      <button class="btn btn-primary" onclick="startLuecke('${lueckeId}')">🔄 Nochmal</button>
+      <button class="btn btn-secondary" onclick="showMenu()">🏠 Menü</button></div>`);
+    return;
+  }
+  
+  let q = lueckeData[lueckeI];
+  let parts = q.text.split('___');
+  
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>✏️</span><span>${lueckeI+1}/${lueckeData.length}</span></div>
+    <div class="progress"><div class="progress-bar" style="width:${(lueckeI/lueckeData.length)*100}%"></div></div>
+    <div class="box" style="font-size:1.1rem;line-height:2">
+      ${parts[0]}<input type="text" class="luecke-input" id="lueckeInput" autocomplete="off">${parts[1] || ''}
+    </div>
+    <button class="btn btn-primary" onclick="checkLuecke()">✓ Prüfen</button>`);
+  
+  document.getElementById('lueckeInput').focus();
+}
+
+function checkLuecke(){
+  let input = document.getElementById('lueckeInput');
+  let val = input.value.trim();
+  let q = lueckeData[lueckeI];
+  
+  if(q.accept.some(a => a.toLowerCase() === val.toLowerCase())){
+    input.classList.add('correct');
+    setTimeout(()=>{lueckeI++;showLuecke();},800);
+  } else {
+    input.classList.add('wrong');
+    setTimeout(()=>{
+      input.value = q.answer;
+      input.classList.remove('wrong');
+      input.classList.add('correct');
+      setTimeout(()=>{lueckeI++;showLuecke();},1200);
+    },800);
+  }
+}
+
+// ============ SIMULATOREN ============
+function startSim(type){
+  if(type === 'temp') showTempSim();
+  else if(type === 'strom') showStromSim();
+  else if(type === 'kreislauf') showKreislaufSim();
+}
+
+function showTempSim(){
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>🌡️ Temperatur-Simulator</span></div>
+    <div class="sim-display" id="tempDisplay">0°C</div>
+    <input type="range" min="-20" max="120" value="0" oninput="updateTemp(this.value)">
+    <div class="sim-info" id="tempState">❄️ Eis (fest)</div>
+    <div class="box"><p>Bewege den Regler und beobachte die Zustandsänderungen!</p></div>`);
+}
+
+function updateTemp(val){
+  document.getElementById('tempDisplay').textContent = val + '°C';
+  let state = val < 0 ? '❄️ Eis (fest)' : val < 100 ? '💧 Wasser (flüssig)' : '☁️ Dampf (gasförmig)';
+  document.getElementById('tempState').textContent = state;
+}
+
+function showStromSim(){
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>💡 Stromkreis-Simulator</span></div>
+    <div class="sim-display" id="lampDisplay">💡</div>
+    <div class="box">
+      <p><strong>Schalter:</strong></p>
+      <button class="btn btn-secondary" onclick="toggleSwitch(true)">🔛 Einschalten</button>
+      <button class="btn btn-secondary" onclick="toggleSwitch(false)">🔴 Ausschalten</button>
+    </div>
+    <div class="sim-info" id="stromInfo">Stromkreis offen - Lampe aus</div>`);
+}
+
+function toggleSwitch(on){
+  document.getElementById('lampDisplay').textContent = on ? '💡✨' : '💡';
+  document.getElementById('lampDisplay').style.background = on ? 'rgba(251,191,36,.3)' : 'rgba(0,0,0,.2)';
+  document.getElementById('stromInfo').textContent = on ? 'Stromkreis geschlossen - Strom fließt!' : 'Stromkreis offen - Lampe aus';
+}
+
+function showKreislaufSim(){
+  render(`<div class="header"><button class="back-btn" onclick="showMenu()">←</button><span>🔄 Wasserkreislauf</span></div>
+    <div class="box" style="font-size:3rem">☀️</div>
+    <div style="display:flex;justify-content:space-around;margin:1rem 0">
+      <div class="sim-info" style="flex:1;margin:.25rem">🌊<br>Meer</div>
+      <div class="sim-info" style="flex:1;margin:.25rem">💨<br>Verdunstung</div>
+      <div class="sim-info" style="flex:1;margin:.25rem">☁️<br>Wolken</div>
+    </div>
+    <div style="display:flex;justify-content:space-around;margin:1rem 0">
+      <div class="sim-info" style="flex:1;margin:.25rem">🌧️<br>Regen</div>
+      <div class="sim-info" style="flex:1;margin:.25rem">🏔️<br>Berge</div>
+      <div class="sim-info" style="flex:1;margin:.25rem">🏞️<br>Flüsse</div>
+    </div>
+    <div class="box"><p>Die Sonne erwärmt das Wasser → Es verdunstet → Wolken bilden sich → Regen fällt → Wasser fließt zurück ins Meer</p></div>`);
+}
+
+// ============ 3D RUNNER (Original-Grafik) ============
+let runnerActive = false;
+let runnerCanvas, runnerCtx;
+let rScore, rCurrentQ, rQuestions, rPlayerLane, rTargetLane, rSpeed, rObstacles, rParticles, rTopicId, rLives;
+const LANE_COLORS = ['#f72585', '#8b5cf6', '#4cc9f0'];
+
+function start3DRunner(id){
+  rTopicId = id;
+  let t = topics.find(x=>x.id===id);
+  
+  rQuestions = shuffle(Q[id]).slice(0,10).map(q => {
+    let wrongOpts = q.o.filter(o => o !== q.a);
+    let wrongs = shuffle(wrongOpts).slice(0,2);
+    let correctLane = Math.floor(Math.random()*3);
+    let answers = [];
+    for(let i=0; i<3; i++){
+      if(i === correctLane) answers.push({text: q.a, correct: true});
+      else answers.push({text: wrongs.pop() || '???', correct: false});
+    }
+    return { question: q.q, answers: answers, correctLane: correctLane };
+  });
+  
+  render(`<div id="runner-container" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0f0a1a;z-index:1000;display:flex;flex-direction:column">
+    <div style="padding:8px;display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.5)">
+      <button onclick="exitRunner()" style="background:#f72585;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-size:14px;font-weight:bold">✕</button>
+      <div id="rQuestion" style="flex:1;background:rgba(0,0,0,.6);color:#fff;padding:10px;border-radius:10px;text-align:center;font-size:14px;border:2px solid #4cc9f0">${t.icon} ${t.name}</div>
+      <div id="rScore" style="background:rgba(0,0,0,.6);color:#4cc9f0;padding:10px 14px;border-radius:10px;font-weight:bold;border:2px solid #4cc9f0">0⭐</div>
+    </div>
+    <div id="rLives" style="text-align:center;font-size:24px;padding:5px">❤️❤️❤️</div>
+    <canvas id="rCanvas" style="flex:1;display:block"></canvas>
+    <div style="padding:10px;background:rgba(0,0,0,.5)">
+      <div id="rProgress" style="height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:10px">
+        <div id="rProgressBar" style="height:100%;background:linear-gradient(90deg,#f72585,#4cc9f0);width:0%;transition:width .3s"></div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:15px">
+        <button id="rLeftBtn" style="width:70px;height:70px;border-radius:50%;border:none;font-size:28px;background:linear-gradient(135deg,#f72585,#b5179e);color:#fff;box-shadow:0 4px 20px rgba(247,37,133,.5)">◀</button>
+        <button id="rMidBtn" style="width:70px;height:70px;border-radius:50%;border:none;font-size:28px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;box-shadow:0 4px 20px rgba(139,92,246,.5)">●</button>
+        <button id="rRightBtn" style="width:70px;height:70px;border-radius:50%;border:none;font-size:28px;background:linear-gradient(135deg,#4cc9f0,#4361ee);color:#fff;box-shadow:0 4px 20px rgba(76,201,240,.5)">▶</button>
+      </div>
+    </div>
+    <div id="rFeedback" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:bold;opacity:0;transition:opacity .2s;pointer-events:none;text-shadow:0 0 30px currentColor"></div>
+    <div id="rStart" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;padding:20px;text-align:center">
+      <h1 style="font-size:32px;margin-bottom:10px">🏃 Quiz Runner</h1>
+      <p style="color:#4cc9f0;font-size:18px;margin-bottom:5px">${t.icon} ${t.name}</p>
+      <p style="color:#aaa;margin-bottom:20px;font-size:14px">Weiche den falschen Antworten aus!<br>Sammle die richtigen ein!</p>
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <div style="text-align:center;padding:10px;background:rgba(247,37,133,.3);border-radius:10px"><div style="font-size:24px">◀</div><div style="font-size:12px;color:#f72585">Links</div></div>
+        <div style="text-align:center;padding:10px;background:rgba(139,92,246,.3);border-radius:10px"><div style="font-size:24px">●</div><div style="font-size:12px;color:#8b5cf6">Mitte</div></div>
+        <div style="text-align:center;padding:10px;background:rgba(76,201,240,.3);border-radius:10px"><div style="font-size:24px">▶</div><div style="font-size:12px;color:#4cc9f0">Rechts</div></div>
+      </div>
+      <button onclick="startRunnerGame()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:18px 50px;font-size:22px;border-radius:50px;box-shadow:0 5px 30px rgba(16,185,129,.5)">▶ START</button>
+    </div>
+    <div id="rEnd" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);display:none;flex-direction:column;justify-content:center;align-items:center;color:#fff;padding:20px;text-align:center">
+      <h1 style="font-size:32px;margin-bottom:15px">🏁 Geschafft!</h1>
+      <div id="rFinalScore" style="font-size:36px;color:#4cc9f0;margin:10px 0">0 ⭐</div>
+      <div id="rFinalStars" style="font-size:48px;margin:10px 0"></div>
+      <p id="rResult" style="color:#aaa;margin-bottom:20px"></p>
+      <button onclick="startRunnerGame()" style="background:linear-gradient(135deg,#4cc9f0,#4361ee);color:#fff;border:none;padding:15px 40px;font-size:18px;border-radius:50px;margin-bottom:10px">🔄 Nochmal</button>
+      <button onclick="exitRunner()" style="background:rgba(255,255,255,.2);color:#fff;border:none;padding:12px 35px;font-size:16px;border-radius:50px">🏠 Menü</button>
+    </div>
+  </div>`);
+  
+  runnerCanvas = document.getElementById('rCanvas');
+  runnerCtx = runnerCanvas.getContext('2d');
+  resizeRunnerCanvas();
+  window.addEventListener('resize', resizeRunnerCanvas);
+  
+  document.getElementById('rLeftBtn').addEventListener('click', ()=>rMoveTo(0));
+  document.getElementById('rLeftBtn').addEventListener('touchstart', e=>{e.preventDefault();rMoveTo(0);});
+  document.getElementById('rMidBtn').addEventListener('click', ()=>rMoveTo(1));
+  document.getElementById('rMidBtn').addEventListener('touchstart', e=>{e.preventDefault();rMoveTo(1);});
+  document.getElementById('rRightBtn').addEventListener('click', ()=>rMoveTo(2));
+  document.getElementById('rRightBtn').addEventListener('touchstart', e=>{e.preventDefault();rMoveTo(2);});
+  
+  document.addEventListener('keydown', rKeyHandler);
+  
+  let touchStartX = 0;
+  runnerCanvas.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  runnerCanvas.addEventListener('touchend', e => {
+    let diff = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(diff) > 30){
+      if(diff < 0 && rPlayerLane > 0) rMoveTo(rPlayerLane - 1);
+      else if(diff > 0 && rPlayerLane < 2) rMoveTo(rPlayerLane + 1);
+    }
+  });
+  
+  rRender();
+}
+
+function resizeRunnerCanvas(){
+  if(!runnerCanvas) return;
+  runnerCanvas.width = runnerCanvas.offsetWidth;
+  runnerCanvas.height = runnerCanvas.offsetHeight;
+}
+
+function rKeyHandler(e){
+  if(!runnerActive) return;
+  if(e.key === 'ArrowLeft' || e.key === 'a') { if(rPlayerLane > 0) rMoveTo(rPlayerLane - 1); }
+  else if(e.key === 'ArrowRight' || e.key === 'd') { if(rPlayerLane < 2) rMoveTo(rPlayerLane + 1); }
+  else if(e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') { rMoveTo(1); }
+}
+
+function exitRunner(){
+  runnerActive = false;
+  document.removeEventListener('keydown', rKeyHandler);
+  window.removeEventListener('resize', resizeRunnerCanvas);
+  showMenu();
+}
+
+function rMoveTo(lane){
+  if(runnerActive && lane >= 0 && lane <= 2) rTargetLane = lane;
+}
+
+function rRender(){
+  let ctx = runnerCtx, w = runnerCanvas.width, h = runnerCanvas.height;
+  let laneWidth = w / 3;
+  
+  let grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'#1a0a2e');
+  grad.addColorStop(1,'#0a1a2e');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h);
+  
+  for(let i=0; i<3; i++){
+    let x = i * laneWidth;
+    ctx.fillStyle = `rgba(${i===0?'247,37,133':i===1?'139,92,246':'76,201,240'},0.1)`;
+    ctx.fillRect(x+2, 0, laneWidth-4, h);
+    
+    ctx.strokeStyle = LANE_COLORS[i];
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    
+    ctx.fillStyle = LANE_COLORS[i];
+    ctx.font = 'bold 12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(i===0?'◀ LINKS':i===1?'● MITTE':'RECHTS ▶', x + laneWidth/2, 20);
+  }
+  
+  ctx.strokeStyle = LANE_COLORS[2];
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(w, 0);
+  ctx.lineTo(w, h);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  
+  let time = Date.now() * 0.003;
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 2;
+  for(let i=0; i<10; i++){
+    let y = ((time * 100 + i * (h/10)) % h);
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+  
+  if(rObstacles){
+    rObstacles.forEach(obs => {
+      let x = obs.lane * laneWidth + laneWidth/2;
+      let boxW = laneWidth - 20;
+      let boxH = 70;
+      
+      ctx.fillStyle = obs.lane === 0 ? 'rgba(247,37,133,0.85)' : 
+                      obs.lane === 1 ? 'rgba(139,92,246,0.85)' : 'rgba(76,201,240,0.85)';
+      ctx.strokeStyle = LANE_COLORS[obs.lane];
+      ctx.lineWidth = 3;
+      
+      let bx = x - boxW/2, by = obs.y - boxH/2;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, boxW, boxH, 12);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.font = 'bold 13px system-ui';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      let text = obs.text;
+      if(text.length > 12){
+        let words = text.split(' ');
+        let line1 = '', line2 = '';
+        words.forEach(w => {
+          if(line1.length + w.length < 14) line1 += (line1 ? ' ' : '') + w;
+          else line2 += (line2 ? ' ' : '') + w;
+        });
+        ctx.fillText(line1, x, obs.y - 5);
+        ctx.fillText(line2, x, obs.y + 12);
+      } else {
+        ctx.fillText(text, x, obs.y + 5);
+      }
+    });
+  }
+  
+  let playerX = (rPlayerLane + (rTargetLane - rPlayerLane) * 0.3) * laneWidth + laneWidth/2;
+  let playerY = h - 80;
+  
+  ctx.shadowBlur = 25;
+  ctx.shadowColor = '#00ff88';
+  
+  ctx.fillStyle = '#00ff88';
+  ctx.beginPath();
+  ctx.moveTo(playerX, playerY - 30);
+  ctx.lineTo(playerX - 20, playerY + 10);
+  ctx.lineTo(playerX + 20, playerY + 10);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(playerX - 6, playerY - 12, 3, 0, Math.PI*2);
+  ctx.arc(playerX + 6, playerY - 12, 3, 0, Math.PI*2);
+  ctx.fill();
+  
+  for(let i=1; i<=4; i++){
+    ctx.fillStyle = `rgba(0,255,136,${0.3-i*0.07})`;
+    ctx.beginPath();
+    ctx.arc(playerX, playerY + 10 + i*12, 12 - i*2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  
+  if(rParticles){
+    rParticles = rParticles.filter(p => p.life > 0);
+    rParticles.forEach(p => {
+      ctx.fillStyle = `rgba(${p.color},${p.life})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
+      ctx.fill();
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.03;
+    });
+  }
+}
+
+function rCreateParticles(x, y, color, count){
+  for(let i=0; i<count; i++){
+    rParticles.push({
+      x: x, y: y,
+      vx: (Math.random()-0.5) * 12,
+      vy: (Math.random()-0.5) * 12,
+      size: Math.random() * 8 + 4,
+      life: 1,
+      color: color
+    });
+  }
+}
+
+function startRunnerGame(){
+  document.getElementById('rStart').style.display = 'none';
+  document.getElementById('rEnd').style.display = 'none';
+  
+  rScore = 0;
+  rCurrentQ = 0;
+  rPlayerLane = 1;
+  rTargetLane = 1;
+  rSpeed = 1.5;
+  rObstacles = [];
+  rParticles = [];
+  rLives = 3;
+  
+  loadNextQuestion();
+  updateRunnerUI();
+  
+  runnerActive = true;
+  rGameLoop();
+}
+
+function loadNextQuestion(){
+  if(rCurrentQ >= rQuestions.length) return;
+  
+  let q = rQuestions[rCurrentQ];
+  document.getElementById('rQuestion').textContent = q.question;
+  
+  let startY = -150;
+  for(let i=0; i<3; i++){
+    rObstacles.push({
+      lane: i,
+      y: startY,
+      text: q.answers[i].text,
+      correct: q.answers[i].correct,
+      passed: false
+    });
+  }
+}
+
+function updateRunnerUI(){
+  document.getElementById('rScore').textContent = rScore + '⭐';
+  document.getElementById('rLives').textContent = '❤️'.repeat(rLives) + '🖤'.repeat(3-rLives);
+  document.getElementById('rProgressBar').style.width = ((rCurrentQ+1) / rQuestions.length * 100) + '%';
+}
+
+function rShowFeedback(correct){
+  let fb = document.getElementById('rFeedback');
+  fb.textContent = correct ? '✓' : '✗';
+  fb.style.color = correct ? '#00ff88' : '#ff4444';
+  fb.style.opacity = '1';
+  setTimeout(() => fb.style.opacity = '0', 500);
+}
+
+function rGameLoop(){
+  if(!runnerActive) return;
+  
+  rPlayerLane += (rTargetLane - rPlayerLane) * 0.2;
+  
+  rObstacles.forEach(obs => {
+    obs.y += rSpeed;
+  });
+  
+  let playerY = runnerCanvas.height - 80;
+  let laneWidth = runnerCanvas.width / 3;
+  
+  rObstacles = rObstacles.filter(obs => {
+    let playerLaneRounded = Math.round(rPlayerLane);
+    if(Math.abs(obs.y - playerY) < 40 && obs.lane === playerLaneRounded && !obs.passed){
+      obs.passed = true;
+      
+      let px = obs.lane * laneWidth + laneWidth/2;
+      
+      if(obs.correct){
+        rScore += 10;
+        rCreateParticles(px, playerY, '0,255,136', 25);
+        rShowFeedback(true);
+        
+        rCurrentQ++;
+        updateRunnerUI();
+        
+        if(rCurrentQ >= rQuestions.length){
+          setTimeout(rEndGame, 800);
+        } else {
+          setTimeout(loadNextQuestion, 1200);
+        }
+        
+        return false;
+      } else {
+        rLives--;
+        rCreateParticles(px, playerY, '255,68,68', 25);
+        rShowFeedback(false);
+        updateRunnerUI();
+        
+        rObstacles.forEach(o => o.passed = true);
+        
+        rCurrentQ++;
+        
+        if(rLives <= 0 || rCurrentQ >= rQuestions.length){
+          setTimeout(rEndGame, 800);
+        } else {
+          setTimeout(loadNextQuestion, 1000);
+        }
+        
+        return false;
+      }
+    }
+    
+    if(obs.y > runnerCanvas.height + 50 && obs.correct && !obs.passed){
+      obs.passed = true;
+      rObstacles.forEach(o => o.passed = true);
+      
+      rLives--;
+      rShowFeedback(false);
+      updateRunnerUI();
+      
+      rCurrentQ++;
+      if(rLives <= 0 || rCurrentQ >= rQuestions.length){
+        setTimeout(rEndGame, 500);
+      } else {
+        setTimeout(loadNextQuestion, 1000);
+      }
+      return false;
+    }
+    
+    if(obs.y > runnerCanvas.height + 50 && !obs.correct){
+      return false;
+    }
+    
+    return obs.y < runnerCanvas.height + 100;
+  });
+  
+  rRender();
+  requestAnimationFrame(rGameLoop);
+}
+
+function rEndGame(){
+  runnerActive = false;
+  let maxScore = rQuestions.length * 10;
+  let pct = Math.round((rScore/maxScore)*100);
+  let s = pct >= 90 ? 3 : pct >= 70 ? 2 : pct >= 50 ? 1 : 0;
+  saveStars('3d_'+rTopicId, s);
+  
+  let resultText = pct >= 90 ? '🏆 Fantastisch!' : pct >= 70 ? '🌟 Super gemacht!' : pct >= 50 ? '👍 Gut!' : '💪 Weiter üben!';
+  
+  document.getElementById('rFinalScore').textContent = rScore + ' / ' + maxScore + ' Punkte';
+  document.getElementById('rFinalStars').textContent = '⭐'.repeat(s) || '😢';
+  document.getElementById('rResult').textContent = resultText;
+  document.getElementById('rEnd').style.display = 'flex';
+}
+
+// Start
+showMenu();
+</script>
+</body>
+</html>

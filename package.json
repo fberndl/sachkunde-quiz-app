@@ -1,0 +1,48 @@
+{
+  "name": "WienQuiz",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "start": "react-native start",
+    "build-android": "cd android && ./gradlew assembleRelease",
+    "web": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "lint": "eslint src/ App.js --ext .js --max-warnings 50",
+    "lint:fix": "eslint src/ App.js --ext .js --fix",
+    "format": "prettier --write 'src/**/*.js' App.js",
+    "test": "bash test-build.sh",
+    "predeploy": "bash test-build.sh",
+    "deploy": "bash test-build.sh && npx vercel --prod --yes"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.100.1",
+    "react": "18.2.0",
+    "react-dom": "^18.2.0",
+    "react-native": "0.73.6",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@babel/preset-react": "^7.28.5",
+    "@babel/runtime": "^7.20.0",
+    "@react-native/babel-preset": "0.73.21",
+    "@react-native/eslint-config": "0.73.2",
+    "@react-native/metro-config": "0.73.5",
+    "@react-native/typescript-config": "0.73.1",
+    "babel-loader": "^10.1.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.6.6",
+    "metro-react-native-babel-preset": "^0.77.0",
+    "prettier": "^3.8.1",
+    "webpack": "^5.105.4",
+    "webpack-cli": "^7.0.2",
+    "webpack-dev-server": "^5.2.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

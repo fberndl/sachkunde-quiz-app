@@ -7,3 +7,10 @@ android/.gradle/
 android/app/build/
 android/build/
 *.apk
+*.tmp.*
+.DS_Store
+.vscode/
+.idea/
+*.log
+npm-debug.log
+.eslintcache

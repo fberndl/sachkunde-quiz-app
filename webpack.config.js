@@ -44,6 +44,18 @@ module.exports = {
       template: './web/index.html',
     }),
   ],
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          priority: 10,
+        },
+      },
+    },
+  },
   devServer: {
     static: path.join(__dirname, 'dist'),
     port: 3000,

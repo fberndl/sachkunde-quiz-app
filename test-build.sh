@@ -77,10 +77,11 @@ else
   fail "index.html fehlt!"
 fi
 
-BUNDLE_COUNT=$(ls dist/bundle.*.js 2>/dev/null | wc -l)
+BUNDLE_COUNT=$(ls dist/bundle.*.js dist/vendors.*.js 2>/dev/null | wc -l)
 if [ "$BUNDLE_COUNT" -gt 0 ]; then
-  BUNDLE_SIZE=$(du -sh dist/bundle.*.js | awk '{print $1}')
-  pass "Bundle erstellt ($BUNDLE_SIZE)"
+  BUNDLE_SIZE=$(du -sh dist/bundle.*.js 2>/dev/null | awk '{print $1}')
+  VENDOR_SIZE=$(du -sh dist/vendors.*.js 2>/dev/null | awk '{print $1}')
+  pass "Bundle erstellt (app: ${BUNDLE_SIZE:-n/a}, vendor: ${VENDOR_SIZE:-n/a})"
 else
   fail "Kein Bundle gefunden!"
 fi

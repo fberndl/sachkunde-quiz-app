@@ -3,9 +3,7 @@ dist/
 .vercel/
 .env
 .env.local
-android/.gradle/
-android/app/build/
-android/build/
+android/
 *.apk
 *.tmp.*
 .DS_Store
@@ -14,3 +12,4 @@ android/build/
 *.log
 npm-debug.log
 .eslintcache
+docs/superpowers/

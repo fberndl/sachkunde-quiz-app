@@ -25,14 +25,14 @@ import PinboardGame from './src/games/PinboardGame';
 import CategoryGame from './src/games/CategoryGame';
 import RingSortGame from './src/games/RingSortGame';
 import RunnerGame from './src/games/RunnerGame';
-import { syncXp, renamePlayer, renameProfile, fetchQuestions, isConfigured as isLeaderboardReady } from './src/services/supabase';
+import { syncXp, renamePlayer, renameProfile, fetchQuestions } from './src/services/supabase';
 import { getLocalXp, setLocalXp, getLocalName, setLocalName, getLocalHighscore, setLocalHighscore, reconcileXp } from './src/services/xpService';
 import QuestionEditor from './src/games/QuestionEditor';
 import FeedbackScreen from './src/games/FeedbackScreen';
 import { getLocalCoins, earnCoins, spendCoins, reconcileCoins, coinsForStars } from './src/services/coinService';
 import {
   getActiveAvatar, setActiveAvatar as persistAvatar, getOwnedAvatars, addOwnedAvatar,
-  getActiveTheme, getOwnedThemes, addOwnedTheme,
+  getOwnedThemes, addOwnedTheme,
   getLocalBadges, recordGamePlayed, getGameStats,
   isFirstTimeGamification, setGamificationVersion,
   syncProfileFromRemote, syncProfileToRemote, unlockBadge,
@@ -46,7 +46,7 @@ import BadgeUnlockOverlay from './src/components/BadgeUnlockOverlay';
 import CoinAnimation from './src/components/CoinAnimation';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 const isSmall = width < 380;
 
 const C = {
@@ -70,7 +70,7 @@ function ImageViewer({ image, visible, onClose }) {
 }
 
 // ─── HOME ─────────────────────────────────────────────────────────────────────
-function HomeScreen({ onStart, onTopicSelect, selectedTopic, highScore, onGames, xp, allQuestions, allTopics, selectedGrade, onGradeSelect, selectedSemester, onSemesterSelect, grades, semesters, playerName, coins, activeAvatar, onAvatarPress }) {
+function HomeScreen({ onStart, onTopicSelect, selectedTopic, _highScore, onGames, xp, allQuestions, allTopics, selectedGrade, onGradeSelect, selectedSemester, onSemesterSelect, grades, semesters, playerName, coins, activeAvatar, onAvatarPress }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => { Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }).start(); }, []);
 

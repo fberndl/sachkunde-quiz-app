@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
+import { Text, Animated, StyleSheet } from 'react-native';
 
 // Animated "+X" coin counter that ticks up from 0 to target.
 export default function CoinAnimation({ amount, onDone }) {

@@ -132,7 +132,7 @@ export function isConfigured() {
 export async function getOrCreateProfile(playerName) {
   if (!supabase || !playerName) return null;
   // Try to fetch existing
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('player_profiles')
     .select('*')
     .eq('player_name', playerName)

@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { STARTER_AVATARS, UNLOCKABLE_AVATARS, getAvatarById } from '../data/avatars';
+import { STARTER_AVATARS, UNLOCKABLE_AVATARS } from '../data/avatars';
 
-export default function ProfileTab({ activeAvatar, ownedAvatars, playerLevel, onSelectAvatar }) {
+export default function ProfileTab({ activeAvatar, ownedAvatars, _playerLevel, onSelectAvatar }) {
   const owned = new Set(ownedAvatars);
 
   const renderAvatar = (avatar) => {

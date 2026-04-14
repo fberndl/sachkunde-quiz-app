@@ -14,7 +14,7 @@ const TABS = [
 
 export default function MeinBereich({
   visible, onClose,
-  playerName, playerLevel, coins,
+  _playerName, playerLevel, coins,
   activeAvatar, ownedAvatars,
   activeTheme, ownedThemes,
   unlockedBadgeIds,

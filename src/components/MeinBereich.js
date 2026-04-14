@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   },
   tabActive: { borderBottomColor: '#F39C12' },
   tabEmoji: { fontSize: 18 },
-  tabLabel: { fontSize: 11, fontWeight: '600', color: '#95A5A6', marginTop: 2 },
+  tabLabel: { fontSize: 12, fontWeight: '600', color: '#7F8C8D', marginTop: 2 },
   tabLabelActive: { color: '#F39C12', fontWeight: '800' },
   content: { flex: 1 },
 });

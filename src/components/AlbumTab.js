@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
   },
   badgeEmoji: { fontSize: 28, marginBottom: 4 },
   badgeLocked: { opacity: 0.4 },
-  tierLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
-  badgeDesc: { fontSize: 10, color: '#95A5A6', textAlign: 'center', marginTop: 4 },
+  tierLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+  badgeDesc: { fontSize: 12, color: '#7F8C8D', textAlign: 'center', marginTop: 4 },
   progressBar: {
     height: 6,
     backgroundColor: '#E8E8E8',

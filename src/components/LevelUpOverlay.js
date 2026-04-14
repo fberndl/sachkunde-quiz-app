@@ -81,5 +81,5 @@ const styles = StyleSheet.create({
   unlockSection: { marginTop: 8, alignItems: 'center' },
   unlockTitle: { fontSize: 14, fontWeight: '700', color: '#2C3E50', marginBottom: 6 },
   unlockItem: { fontSize: 14, color: '#7f8c8d', marginBottom: 2 },
-  dismiss: { fontSize: 13, color: '#BDC3C7', marginTop: 16 },
+  dismiss: { fontSize: 13, color: '#7F8C8D', marginTop: 16 },
 });

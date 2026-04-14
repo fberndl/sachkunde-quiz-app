@@ -55,8 +55,8 @@ const styles = StyleSheet.create({
   activeCell: { borderColor: '#F39C12', backgroundColor: 'rgba(243, 156, 18, 0.08)' },
   emoji: { fontSize: 32 },
   locked: { opacity: 0.3 },
-  label: { fontSize: 10, color: '#2C3E50', marginTop: 4, textAlign: 'center' },
-  lockedLabel: { color: '#CCC' },
+  label: { fontSize: 12, color: '#2C3E50', marginTop: 4, textAlign: 'center' },
+  lockedLabel: { color: '#7F8C8D' },
   activeDot: {
     width: 8, height: 8, borderRadius: 4, backgroundColor: '#F39C12',
     position: 'absolute', top: 4, right: 4,

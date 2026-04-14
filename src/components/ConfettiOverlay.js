@@ -108,7 +108,7 @@ function ConfettiNative({ onDone }) {
       ])
     );
     Animated.parallel(animations).start(() => onDone && onDone());
-  }, []);
+  }, [onDone]);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

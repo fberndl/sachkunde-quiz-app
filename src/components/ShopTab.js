@@ -130,9 +130,9 @@ const styles = StyleSheet.create({
   itemInfo: { flex: 1 },
   itemName: { fontSize: 16, fontWeight: '700', color: '#2C3E50' },
   priceText: { fontSize: 14, fontWeight: '700', color: '#F39C12', marginTop: 2 },
-  cantAfford: { color: '#BDC3C7' },
+  cantAfford: { color: '#7F8C8D' },
   ownedText: { fontSize: 13, fontWeight: '700', color: '#27AE60', marginTop: 2 },
-  lockedText: { fontSize: 13, fontWeight: '600', color: '#BDC3C7', marginTop: 2 },
+  lockedText: { fontSize: 13, fontWeight: '600', color: '#7F8C8D', marginTop: 2 },
 
   overlay: {
     flex: 1,

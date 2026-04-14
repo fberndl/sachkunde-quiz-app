@@ -859,8 +859,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   key: {
-    minWidth: 30,
-    height: 38,
+    minWidth: 36,
+    height: 42,
     backgroundColor: COLORS.white,
     borderRadius: 5,
     marginHorizontal: 2,

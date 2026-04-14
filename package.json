@@ -8,7 +8,7 @@
     "build-android": "cd android && ./gradlew assembleRelease",
     "web": "webpack serve --mode development",
     "build": "webpack --mode production",
-    "lint": "eslint src/ App.js --ext .js --max-warnings 300",
+    "lint": "eslint src/ App.js --ext .js --max-warnings 35",
     "lint:fix": "eslint src/ App.js --ext .js --fix",
     "format": "prettier --write 'src/**/*.js' App.js",
     "test": "bash test-build.sh",

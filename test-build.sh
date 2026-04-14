@@ -13,7 +13,7 @@ warn() { echo "  ⚠️  $1"; WARN=$((WARN + 1)); }
 
 echo ""
 echo "═══════════════════════════════════════════"
-echo "  🧪 Sachkunde Test 2 - Build & Smoke Test"
+echo "  🧪 Sachkunde Quiz - Build & Smoke Test"
 echo "═══════════════════════════════════════════"
 
 # 1. Prüfe ob alle Game-Dateien existieren
